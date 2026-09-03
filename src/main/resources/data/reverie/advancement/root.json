@@ -1,0 +1,18 @@
+{
+  "display": {
+    "icon": { "id": "reverie:dreamweavers_bed" },
+    "title": { "translate": "advancement.reverie.root.title" },
+    "description": { "translate": "advancement.reverie.root.description" },
+    "background": "minecraft:textures/block/white_concrete.png",
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "obtain_bed": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": { "items": [{ "items": "reverie:dreamweavers_bed" }] }
+    }
+  }
+}

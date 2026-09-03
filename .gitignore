@@ -1,0 +1,52 @@
+### Gradle ###
+.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/**/build/
+
+### IntelliJ IDEA ###
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+!**/src/**/out/
+
+.run/
+
+### Eclipse ###
+.apt_generated
+.classpath
+.eclipse/
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+bin/
+!**/src/**/bin/
+
+### VS Code ###
+.vscode/
+
+### Mac OS ###
+.DS_Store
+
+### Minecraft Modding ###
+run/
+!**/src/**/run/
+**/src/generated/**/.cache/
+repo/
+!**/src/**/repo/
+
+### Release outputs ###
+artifacts/
+modrinth-release/*.jar
+modrinth-release/*.sha256
+TEMPLATE_LICENSE.txt
+
+### Local-only art references ###
+art-templates/**/vanilla_*.png
+art-templates/figment-cage/figment_cage_5_state_template.png
+art-templates/figment-cage/tan-echo-mockup/
+src/main/resources/assets/examplemod/

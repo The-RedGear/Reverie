@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "PEP",
+    "ABA",
+    "PRP"
+  ],
+  "key": {
+    "P": { "item": "minecraft:phantom_membrane" },
+    "E": { "item": "minecraft:echo_shard" },
+    "A": { "item": "minecraft:amethyst_shard" },
+    "B": { "tag": "minecraft:beds" },
+    "R": { "item": "minecraft:recovery_compass" }
+  },
+  "result": {
+    "id": "reverie:dreamweavers_bed",
+    "count": 1
+  },
+  "show_notification": true
+}

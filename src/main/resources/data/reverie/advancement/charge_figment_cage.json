@@ -1,0 +1,13 @@
+{
+  "parent": "reverie:enter_reverie",
+  "display": {
+    "icon": { "id": "reverie:figment_cage" },
+    "title": { "translate": "advancement.reverie.cage.title" },
+    "description": { "translate": "advancement.reverie.cage.description" },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": { "charged": { "trigger": "minecraft:impossible" } }
+}

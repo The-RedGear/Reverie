@@ -1,0 +1,22 @@
+name: Feature request
+description: Suggest a focused improvement to Reverie
+title: "[Idea]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Proposed behavior
+    validations:
+      required: true
+  - type: textarea
+    id: safety
+    attributes:
+      label: Survival or multiplayer considerations
+      description: Could this affect item safety, progression, shared beds, anchors, or server performance?

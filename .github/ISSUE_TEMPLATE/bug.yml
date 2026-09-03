@@ -1,0 +1,52 @@
+name: Bug report
+description: Report a reproducible Reverie problem
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: "Thanks for helping improve Reverie. Remove private server details from uploaded logs."
+  - type: input
+    id: reverie
+    attributes:
+      label: Reverie version
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Minecraft, NeoForge, and environment
+      placeholder: "Minecraft 1.21.1, NeoForge 21.1.x, dedicated server"
+    validations:
+      required: true
+  - type: textarea
+    id: mods
+    attributes:
+      label: Relevant mods
+      description: Include versions for Accessories, Curios, Create, or anything involved in the problem.
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+      placeholder: "1. Place...\n2. Enter...\n3. Observe..."
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected and actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or crash report
+      description: Drag the file here instead of pasting thousands of lines.
+  - type: checkboxes
+    id: backup
+    attributes:
+      label: Safety check
+      options:
+        - label: I tested with a world backup and removed private information from uploaded files.
+          required: true

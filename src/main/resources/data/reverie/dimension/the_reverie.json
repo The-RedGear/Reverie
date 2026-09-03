@@ -1,0 +1,16 @@
+{
+  "type": "reverie:the_reverie",
+  "generator": {
+    "type": "minecraft:flat",
+    "settings": {
+      "biome": "reverie:lucid_expanse",
+      "lakes": false,
+      "features": false,
+      "layers": [
+        { "block": "minecraft:bedrock", "height": 1 },
+        { "block": "minecraft:white_concrete", "height": 31 }
+      ],
+      "structure_overrides": []
+    }
+  }
+}

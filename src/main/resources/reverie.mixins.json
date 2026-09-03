@@ -1,0 +1,20 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.redgear.reverie.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "PlayerAdvancementsMixin",
+    "ServerLevelMixin",
+    "LevelBlockPlacementMixin",
+    "compat.CreateSchematicannonBlockMixin",
+    "compat.CreateSchematicPlacePacketMixin"
+  ],
+  "client": [
+    "client.BedRendererMixin",
+    "client.BlockEntityWithoutLevelRendererMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

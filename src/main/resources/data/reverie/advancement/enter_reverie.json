@@ -1,0 +1,13 @@
+{
+  "parent": "reverie:root",
+  "display": {
+    "icon": { "id": "minecraft:ender_pearl" },
+    "title": { "translate": "advancement.reverie.enter.title" },
+    "description": { "translate": "advancement.reverie.enter.description" },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": { "entered": { "trigger": "minecraft:impossible" } }
+}
