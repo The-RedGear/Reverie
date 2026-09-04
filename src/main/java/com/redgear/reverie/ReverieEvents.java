@@ -17,8 +17,8 @@ import net.minecraft.world.level.block.state.properties.BedPart;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.level.portal.DimensionTransition;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -403,10 +403,11 @@ public final class ReverieEvents {
             setDreamingVisual(player.server.overworld(), session.wakingBed(), false);
         }
         if (bedToRemove != null && reverie != null) removeDreamBed(reverie, bedToRemove);
+        BlockPos wakingBed = session.wakingBed();
         player.getInventory().clearContent();
         ModdedInventoryBridge.clearAll(player);
         session.finish();
-        restoreWakingPlayer(player, wakingPlayer);
+        restoreWakingPlayer(player, wakingPlayer, wakingBed);
         applyOverstayEffect(player, dreamDuration);
         emitGust((ServerLevel) player.level(), player.blockPosition());
         playTransitionSound((ServerLevel) player.level(), player.blockPosition(), false);
@@ -445,10 +446,32 @@ public final class ReverieEvents {
     }
 
     static void restoreWakingPlayer(ServerPlayer player, CompoundTag wakingPlayer) {
+        restoreWakingPlayer(player, wakingPlayer, null);
+    }
+
+    static void restoreWakingPlayer(ServerPlayer player, CompoundTag wakingPlayer, BlockPos wakingBed) {
         GameType wakingGameMode = GameType.byId(wakingPlayer.getInt("playerGameType"));
         player.load(wakingPlayer);
-        player.teleportTo(player.server.overworld(), player.getX(), player.getY(), player.getZ(),
-                player.getYRot(), player.getXRot());
+        ServerLevel overworld = player.server.overworld();
+        java.util.Optional<net.minecraft.world.phys.Vec3> safeBedExit = java.util.Optional.empty();
+        if (wakingBed != null) {
+            BlockState bedState = overworld.getBlockState(wakingBed);
+            if (bedState.is(Reverie.DREAMWEAVERS_BED.get())) {
+                safeBedExit = BedBlock.findStandUpPosition(EntityType.PLAYER, overworld, wakingBed,
+                        bedState.getValue(BedBlock.FACING), player.getYRot());
+            }
+        }
+        if (safeBedExit.isPresent()) {
+            net.minecraft.world.phys.Vec3 safe = safeBedExit.get();
+            player.teleportTo(overworld, safe.x, safe.y, safe.z, player.getYRot(), player.getXRot());
+        } else if (wakingBed != null) {
+            DimensionTransition fallback = player.findRespawnPositionAndUseSpawnBlock(true, DimensionTransition.DO_NOTHING);
+            player.teleportTo(fallback.newLevel(), fallback.pos().x, fallback.pos().y, fallback.pos().z,
+                    fallback.yRot(), fallback.xRot());
+        } else {
+            player.teleportTo(overworld, player.getX(), player.getY(), player.getZ(),
+                    player.getYRot(), player.getXRot());
+        }
         player.setGameMode(wakingGameMode);
         player.removeAllEffects();
         ModdedInventoryBridge.refreshAll(player);
@@ -875,25 +898,21 @@ public final class ReverieEvents {
         if (!player.level().dimension().equals(net.minecraft.world.level.Level.OVERWORLD)
                 || player.level().getGameTime() % 10L != 0L) return;
         ServerLevel level = (ServerLevel) player.level();
-        BlockPos lookedBed = null;
-        HitResult hit = player.pick(8.0D, 0.0F, false);
-        if (hit instanceof BlockHitResult blockHit) {
-            BlockState hitState = level.getBlockState(blockHit.getBlockPos());
-            if (hitState.is(Reverie.DREAMWEAVERS_BED.get())) lookedBed = bedFoot(blockHit.getBlockPos(), hitState);
-        }
-        if (lookedBed != null && ReverieBedLinksData.get(player.server).occupantCount(lookedBed) > 0) {
-            java.util.UUID ownerId = ReverieBedOwnersData.get(player.server).owner(lookedBed);
+        PacketDistributor.sendToPlayer(player, new ReverieBedOccupancyPayload(0L, "", "", false));
+        for (BlockPos occupiedBed : ReverieBedLinksData.get(player.server).occupiedWakingBeds()) {
+            if (occupiedBed.distSqr(player.blockPosition()) > 32.0D * 32.0D
+                    || !level.hasChunkAt(occupiedBed)
+                    || !level.getBlockState(occupiedBed).is(Reverie.DREAMWEAVERS_BED.get())) continue;
+            java.util.UUID ownerId = ReverieBedOwnersData.get(player.server).owner(occupiedBed);
             java.util.List<String> guests = new java.util.ArrayList<>();
             String owner = "";
-            for (java.util.UUID occupant : ReverieBedLinksData.get(player.server).occupants(lookedBed)) {
+            for (java.util.UUID occupant : ReverieBedLinksData.get(player.server).occupants(occupiedBed)) {
                 ServerPlayer dreamer = player.server.getPlayerList().getPlayer(occupant);
                 String name = dreamer == null ? occupant.toString().substring(0, 8) : dreamer.getGameProfile().getName();
                 if (occupant.equals(ownerId)) owner = name; else guests.add(name);
             }
             PacketDistributor.sendToPlayer(player, new ReverieBedOccupancyPayload(
-                    lookedBed.asLong(), owner, String.join("\u0000", guests), true));
-        } else {
-            PacketDistributor.sendToPlayer(player, new ReverieBedOccupancyPayload(0L, "", "", false));
+                    occupiedBed.asLong(), owner, String.join("\u0000", guests), true));
         }
         for (BlockPos bed : ReverieBedLinksData.get(player.server).occupiedWakingBeds()) {
             if (bed.distSqr(player.blockPosition()) > 32.0D * 32.0D

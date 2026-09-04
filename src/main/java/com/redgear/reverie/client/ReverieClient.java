@@ -25,7 +25,8 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 @EventBusSubscriber(modid = Reverie.MOD_ID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
 public final class ReverieClient {
     private static final int PLAINS_GRASS_COLOR = 0x91BD59;
-    private static volatile ReverieBedOccupancyPayload hoveredBed = new ReverieBedOccupancyPayload(0L, "", "", false);
+    private static final java.util.Map<Long, ReverieBedOccupancyPayload> occupiedBeds =
+            new java.util.concurrent.ConcurrentHashMap<>();
     private ReverieClient() {}
 
     @SubscribeEvent
@@ -53,11 +54,12 @@ public final class ReverieClient {
     }
 
     public static void handleBedOccupancy(ReverieBedOccupancyPayload payload, IPayloadContext context) {
-        hoveredBed = payload;
+        if (!payload.visible()) occupiedBeds.clear();
+        else occupiedBeds.put(payload.bedPos(), payload);
     }
 
-    public static ReverieBedOccupancyPayload hoveredBed() {
-        return hoveredBed;
+    public static java.util.Collection<ReverieBedOccupancyPayload> occupiedBeds() {
+        return java.util.List.copyOf(occupiedBeds.values());
     }
 
     private static final class WhiteEffects extends DimensionSpecialEffects {

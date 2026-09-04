@@ -18,8 +18,12 @@ public final class ReverieBedLabelRenderer {
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_BLOCK_ENTITIES) return;
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.level == null) return;
-        var occupancy = ReverieClient.hoveredBed();
-        if (!occupancy.visible()) return;
+        for (var occupancy : ReverieClient.occupiedBeds()) renderBed(event, occupancy);
+    }
+
+    private static void renderBed(RenderLevelStageEvent event,
+                                  com.redgear.reverie.ReverieBedOccupancyPayload occupancy) {
+        Minecraft minecraft = Minecraft.getInstance();
         BlockPos foot = BlockPos.of(occupancy.bedPos());
         BlockState state = minecraft.level.getBlockState(foot);
         if (!state.is(Reverie.DREAMWEAVERS_BED.get())) return;
