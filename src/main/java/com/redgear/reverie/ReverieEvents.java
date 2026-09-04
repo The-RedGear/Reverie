@@ -281,7 +281,9 @@ public final class ReverieEvents {
         int grassColor = player.server.overworld().getBiome(wakingBed).value()
                 .getGrassColor(wakingBed.getX(), wakingBed.getZ());
         ReverieBiomeTintsData biomeTints = ReverieBiomeTintsData.get(player.server);
-        biomeTints.remember(wakingBed.getX() >> 4, wakingBed.getZ() >> 4, grassColor);
+        // Tint the project site around the actual Reverie anchor. Anchors may be
+        // moved independently of the waking bed while retaining their link.
+        biomeTints.remember(arrivalBed.getX() >> 4, arrivalBed.getZ() >> 4, grassColor);
         biomeTints.sendTo(player);
         emitGust(destination, arrivalBed);
         playTransitionSound(destination, arrivalBed, true);

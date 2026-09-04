@@ -2,7 +2,8 @@
 
 ## Unreleased
 
-- Made the Reverie sky smoothly follow its selected time, blending from the original pearly-white noon to a cool dark-gray midnight without orange sunrise or sunset tones.
+- Made the Reverie sky and actual build lighting follow its selected time, blending from the original pearly-white noon to a cool dark-gray midnight without orange sunrise or sunset tones.
+- Corrected inherited grass tint regions to center on the linked Reverie anchor rather than the waking bed's original coordinates.
 
 ## 0.1.0 - Initial alpha
 

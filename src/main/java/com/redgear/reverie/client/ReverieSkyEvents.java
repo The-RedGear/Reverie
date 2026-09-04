@@ -4,12 +4,8 @@ import com.redgear.reverie.Reverie;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.util.Mth;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ViewportEvent;
 
-@EventBusSubscriber(modid = Reverie.MOD_ID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.GAME)
 public final class ReverieSkyEvents {
     private static final float NOON_RED = 0.96F;
     private static final float NOON_GREEN = 0.97F;
@@ -20,7 +16,6 @@ public final class ReverieSkyEvents {
 
     private ReverieSkyEvents() {}
 
-    @SubscribeEvent
     public static void computeFogColor(ViewportEvent.ComputeFogColor event) {
         ClientLevel level = Minecraft.getInstance().level;
         if (level == null || !level.dimension().equals(Reverie.REVERIE_LEVEL)) return;
