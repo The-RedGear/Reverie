@@ -8,6 +8,7 @@ import net.neoforged.neoforge.common.util.INBTSerializable;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import java.util.function.Supplier;
+import java.util.UUID;
 
 public final class ReverieSession implements INBTSerializable<CompoundTag> {
     public static final DeferredRegister<AttachmentType<?>> ATTACHMENTS =
@@ -21,6 +22,9 @@ public final class ReverieSession implements INBTSerializable<CompoundTag> {
     private boolean anchorInventory;
     private long dreamElapsedTicks;
     private boolean overstayWarned;
+    private UUID bedOwner;
+    private long hostMissingTicks;
+    private boolean hostMissingWarned;
     public boolean active() { return active; }
     public CompoundTag wakingPlayer() { return wakingPlayer.copy(); }
     public BlockPos wakingBed() { return wakingBed; }
@@ -30,7 +34,14 @@ public final class ReverieSession implements INBTSerializable<CompoundTag> {
     public void tickDream() { if (active) dreamElapsedTicks++; }
     public boolean overstayWarned() { return overstayWarned; }
     public void markOverstayWarned() { overstayWarned = true; }
-    public void begin(CompoundTag tag, BlockPos wakingBed, BlockPos dreamBed, boolean anchorInventory, long ignoredStartTime) {
+    public UUID bedOwner() { return bedOwner; }
+    public long hostMissingTicks() { return hostMissingTicks; }
+    public void tickHostMissing() { hostMissingTicks++; }
+    public void resetHostMissing() { hostMissingTicks = 0L; hostMissingWarned = false; }
+    public boolean hostMissingWarned() { return hostMissingWarned; }
+    public void markHostMissingWarned() { hostMissingWarned = true; }
+    public void begin(CompoundTag tag, BlockPos wakingBed, BlockPos dreamBed, boolean anchorInventory,
+                      long ignoredStartTime, UUID bedOwner) {
         active = true;
         wakingPlayer = tag.copy();
         this.wakingBed = wakingBed.immutable();
@@ -38,6 +49,9 @@ public final class ReverieSession implements INBTSerializable<CompoundTag> {
         this.anchorInventory = anchorInventory;
         this.dreamElapsedTicks = 0L;
         this.overstayWarned = false;
+        this.bedOwner = bedOwner;
+        this.hostMissingTicks = 0L;
+        this.hostMissingWarned = false;
     }
     public void finish() {
         active = false;
@@ -47,6 +61,9 @@ public final class ReverieSession implements INBTSerializable<CompoundTag> {
         anchorInventory = false;
         dreamElapsedTicks = 0L;
         overstayWarned = false;
+        bedOwner = null;
+        hostMissingTicks = 0L;
+        hostMissingWarned = false;
     }
 
     @Override public CompoundTag serializeNBT(HolderLookup.Provider provider) {
@@ -60,6 +77,9 @@ public final class ReverieSession implements INBTSerializable<CompoundTag> {
             tag.putBoolean("AnchorInventory", anchorInventory);
             tag.putLong("DreamElapsedTicks", dreamElapsedTicks);
             tag.putBoolean("OverstayWarned", overstayWarned);
+            if (bedOwner != null) tag.putUUID("BedOwner", bedOwner);
+            tag.putLong("HostMissingTicks", hostMissingTicks);
+            tag.putBoolean("HostMissingWarned", hostMissingWarned);
         }
         return tag;
     }
@@ -71,5 +91,8 @@ public final class ReverieSession implements INBTSerializable<CompoundTag> {
         anchorInventory = tag.getBoolean("AnchorInventory");
         dreamElapsedTicks = tag.getLong("DreamElapsedTicks");
         overstayWarned = tag.getBoolean("OverstayWarned");
+        bedOwner = tag.hasUUID("BedOwner") ? tag.getUUID("BedOwner") : null;
+        hostMissingTicks = tag.getLong("HostMissingTicks");
+        hostMissingWarned = tag.getBoolean("HostMissingWarned");
     }
 }

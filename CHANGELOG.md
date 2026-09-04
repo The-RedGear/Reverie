@@ -14,7 +14,8 @@
 - Looking at an occupied Dreamweaver's Bed now shows its current dreamers above it, with the active owner accented and guests in white.
 - Breaking an occupied Dreamweaver's Bed now requires a second deliberate break attempt after a warning.
 - Non-owners must now pay the configured guest-entry cost when using another player's bed even while it is unoccupied; owners and creative players remain exempt.
-- A bed's owner must now enter before guests can join. If the owner leaves, guests wake after a configurable three-minute grace period unless the owner returns first.
+- A bed's owner must now enter before guests can join. If the owner leaves, guests wake after a configurable one-minute grace period unless the owner returns first.
+- Bed-host warnings now name the owner, the default guest grace period is one minute, its countdown persists through bed replacement, and occupied-bed labels correctly normalize the rendered head to the stored foot position.
 
 ## 0.1.0 - Initial alpha
 

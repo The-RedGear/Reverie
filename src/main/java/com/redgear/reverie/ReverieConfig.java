@@ -38,7 +38,7 @@ public final class ReverieConfig {
         CONSUME_SHARED_BED_COST = builder.comment("Whether the guest entry item is consumed after a successful transition.")
                 .define("consumeSharedBedCost", true);
         OWNER_ABSENCE_GRACE_SECONDS = builder.comment("Seconds guests may remain after the bed owner leaves the Reverie. Zero wakes them immediately.")
-                .defineInRange("ownerAbsenceGraceSeconds", 180, 0, 3600);
+                .defineInRange("ownerAbsenceGraceSeconds", 60, 0, 3600);
         builder.pop();
 
         builder.push("reverie_time");
