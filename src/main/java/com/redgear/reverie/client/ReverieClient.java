@@ -25,7 +25,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 @EventBusSubscriber(modid = Reverie.MOD_ID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
 public final class ReverieClient {
     private static final int PLAINS_GRASS_COLOR = 0x91BD59;
-    private static ReverieBedOccupancyPayload hoveredBed = new ReverieBedOccupancyPayload(0L, "", "", false);
+    private static volatile ReverieBedOccupancyPayload hoveredBed = new ReverieBedOccupancyPayload(0L, "", "", false);
     private ReverieClient() {}
 
     @SubscribeEvent
@@ -38,6 +38,7 @@ public final class ReverieClient {
         // Register explicitly on the gameplay bus. The subscriber bus selector is
         // deprecated in current NeoForge and was not reliably attaching this handler.
         event.enqueueWork(() -> NeoForge.EVENT_BUS.addListener(ReverieSkyEvents::computeFogColor));
+        event.enqueueWork(() -> NeoForge.EVENT_BUS.addListener(ReverieBedLabelRenderer::render));
     }
 
     @SubscribeEvent

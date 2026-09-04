@@ -18,6 +18,7 @@
 - Bed-host warnings now name the owner, the default guest grace period is one minute, its countdown persists through bed replacement, and occupied-bed labels correctly normalize the rendered head to the stored foot position.
 - Guests now see their remaining host-absence grace time update once per second in the action bar.
 - Capped the guest host-absence grace period at 60 seconds, including automatic correction of older 180-second configs, and removed the redundant chat alert.
+- Moved occupied-bed floating names out of the bed block-entity renderer and into the reliable world render stage.
 
 ## 0.1.0 - Initial alpha
 
