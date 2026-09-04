@@ -16,6 +16,10 @@
 - Added protection against restricted content introduced through automated building or schematic tools.
 - Added a persistent, operator-controlled Reverie clock with day, noon, night, midnight, and custom lighting settings.
 - Added player Clock controls for advancing Reverie time or returning it to noon, with a visible cooldown and server configuration.
+- Added a shared Clock cooldown and dimension-wide feedback naming the player who changed the lighting.
+- Added Overworld-biome grass tinting around each entry location without modifying or regenerating existing Reverie chunks.
+- Added sneak-use bed information for ownership, occupancy, capacity, and owner reservation.
+- Clarified on the Figment Cage that hostile spawners still require darkness.
 - Added three Reverie advancements for obtaining the bed, entering the dreamscape, and charging a Figment Cage.
 - Added rate-limited, item-specific rejection feedback.
 - Added startup configuration validation and `/reverie doctor` diagnostics.
