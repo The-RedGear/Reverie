@@ -22,6 +22,7 @@
 - Occupied-bed labels now remain visible within 32 blocks without crosshair targeting. Waking now validates vanilla bed stand-up space and falls back to the player's respawn point or world spawn when the bed area is obstructed.
 - A bed owner who disconnects inside the Reverie now counts as absent: guests receive the configured countdown and awaken unless the owner reconnects to the same active dream session in time.
 - Rebuilt occupied-bed names around Minecraft's native nametag drawing path, with direct client event registration, render-thread-safe occupancy updates, and the proper entity-effect render stage.
+- Occupied beds now resolve disconnected players through Minecraft's profile cache instead of displaying a shortened UUID.
 
 ## 0.1.0 - Initial alpha
 

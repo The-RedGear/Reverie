@@ -280,7 +280,7 @@ public final class ReverieEvents {
         boolean isBedOwner = player.getUUID().equals(bedOwner);
         if (!isBedOwner && !isBedOwnerPresent(player, wakingBed, bedOwner)) {
             player.displayClientMessage(Component.translatable("message.reverie.owner_must_enter_first",
-                    playerName(player.server.getPlayerList().getPlayer(bedOwner), bedOwner)), true);
+                    playerName(player.server, bedOwner)), true);
             return;
         }
         if (!canEnterBed(player, wakingBed, isBedOwner)) {
@@ -330,7 +330,7 @@ public final class ReverieEvents {
                 || !isBedOwnerPresent(player, wakingBed, currentOwner))) {
             player.displayClientMessage(Component.translatable("message.reverie.owner_must_enter_first",
                     currentOwner == null ? "Unknown" : playerName(
-                            player.server.getPlayerList().getPlayer(currentOwner), currentOwner)), true);
+                            player.server, currentOwner)), true);
             return;
         }
         if (pending.guest()) {
@@ -600,8 +600,12 @@ public final class ReverieEvents {
         return false;
     }
 
-    private static String playerName(ServerPlayer online, java.util.UUID id) {
-        return online == null ? id.toString().substring(0, 8) : online.getGameProfile().getName();
+    private static String playerName(net.minecraft.server.MinecraftServer server, java.util.UUID id) {
+        ServerPlayer online = server.getPlayerList().getPlayer(id);
+        if (online != null) return online.getGameProfile().getName();
+        return server.getProfileCache().get(id)
+                .map(com.mojang.authlib.GameProfile::getName)
+                .orElse("Unknown dreamer");
     }
 
     private static boolean isBedOwnerPresent(ServerPlayer player, BlockPos wakingBed, java.util.UUID owner) {
@@ -916,8 +920,7 @@ public final class ReverieEvents {
             java.util.List<String> guests = new java.util.ArrayList<>();
             String owner = "";
             for (java.util.UUID occupant : ReverieBedLinksData.get(player.server).occupants(occupiedBed)) {
-                ServerPlayer dreamer = player.server.getPlayerList().getPlayer(occupant);
-                String name = dreamer == null ? occupant.toString().substring(0, 8) : dreamer.getGameProfile().getName();
+                String name = playerName(player.server, occupant);
                 if (occupant.equals(ownerId)) owner = name; else guests.add(name);
             }
             PacketDistributor.sendToPlayer(player, new ReverieBedOccupancyPayload(
