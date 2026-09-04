@@ -17,6 +17,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.util.Mth;
+import net.minecraft.world.level.GrassColor;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -39,12 +40,12 @@ public final class ReverieClient {
                 Integer tint = GRASS_TINTS.get(ChunkPos.asLong(pos.getX() >> 4, pos.getZ() >> 4));
                 if (tint != null) return tint;
             }
-            return level == null || pos == null ? -1 : BiomeColors.getAverageGrassColor(level, pos);
+            return level == null || pos == null ? GrassColor.getDefaultColor() : BiomeColors.getAverageGrassColor(level, pos);
         }, Blocks.GRASS_BLOCK, Blocks.SHORT_GRASS, Blocks.TALL_GRASS, Blocks.FERN, Blocks.LARGE_FERN);
     }
 
     public static void handleBiomeTint(ReverieBiomeTintPayload payload, IPayloadContext context) {
-        GRASS_TINTS.clear();
+        if (payload.reset()) GRASS_TINTS.clear();
         for (int dx = -payload.radius(); dx <= payload.radius(); dx++) {
             for (int dz = -payload.radius(); dz <= payload.radius(); dz++) {
                 GRASS_TINTS.put(ChunkPos.asLong(payload.centerChunkX() + dx, payload.centerChunkZ() + dz),

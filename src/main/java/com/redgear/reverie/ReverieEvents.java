@@ -38,7 +38,6 @@ import net.neoforged.neoforge.event.entity.player.PlayerXpEvent;
 import net.neoforged.neoforge.event.entity.EntityTravelToDimensionEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.event.level.ExplosionEvent;
-import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
 import net.neoforged.neoforge.event.LootTableLoadEvent;
@@ -279,8 +278,9 @@ public final class ReverieEvents {
                 player.getYRot(), player.getXRot());
         int grassColor = player.server.overworld().getBiome(wakingBed).value()
                 .getGrassColor(wakingBed.getX(), wakingBed.getZ());
-        PacketDistributor.sendToPlayer(player, new ReverieBiomeTintPayload(
-                wakingBed.getX() >> 4, wakingBed.getZ() >> 4, 2, grassColor));
+        ReverieBiomeTintsData biomeTints = ReverieBiomeTintsData.get(player.server);
+        biomeTints.remember(wakingBed.getX() >> 4, wakingBed.getZ() >> 4, grassColor);
+        biomeTints.sendTo(player);
         emitGust(destination, arrivalBed);
         playTransitionSound(destination, arrivalBed, true);
         player.setGameMode(GameType.CREATIVE);
