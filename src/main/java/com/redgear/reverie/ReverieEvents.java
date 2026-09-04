@@ -162,13 +162,14 @@ public final class ReverieEvents {
         BlockState bedState = player.level().getBlockState(wakingBed);
         if (!bedState.is(Reverie.DREAMWEAVERS_BED.get())) return;
         java.util.UUID bedOwner = ReverieBedOwnersData.get(player.server).claimIfUnowned(wakingBed, player.getUUID());
+        boolean isBedOwner = player.getUUID().equals(bedOwner);
         int occupants = ReverieBedLinksData.get(player.server).occupantCount(wakingBed);
-        if (occupants >= ReverieConfig.MAX_DREAMERS_PER_BED.get()) {
-            player.displayClientMessage(Component.translatable("message.reverie.bed_full"), true);
+        if (!canEnterBed(player, wakingBed, isBedOwner)) {
+            player.displayClientMessage(Component.translatable("message.reverie.bed_reserved"), true);
             return;
         }
         Item sharedCost = configuredItem(ReverieConfig.SHARED_BED_COST_ITEM.get());
-        boolean guest = occupants > 0 && sharedCost != null && !player.isCreative();
+        boolean guest = !isBedOwner && occupants > 0 && sharedCost != null && !player.isCreative();
         if (guest && !player.getItemInHand(hand).is(sharedCost)) {
             player.displayClientMessage(Component.translatable("message.reverie.guest_cost", sharedCost.getDescription()), true);
             return;
@@ -181,7 +182,7 @@ public final class ReverieEvents {
         }
         PendingDream pending = new PendingDream(wakingBed.immutable(),
                 player.level().getGameTime() + DREAM_TRANSITION_TICKS, guest, hand, sharedCost,
-                player.getUUID().equals(bedOwner));
+                isBedOwner);
         if (player.isCreative()) {
             dream(player, pending);
         } else {
@@ -201,8 +202,8 @@ public final class ReverieEvents {
             player.displayClientMessage(Component.translatable("message.reverie.missing_dimension"), false);
             return;
         }
-        if (ReverieBedLinksData.get(player.server).occupantCount(wakingBed) >= ReverieConfig.MAX_DREAMERS_PER_BED.get()) {
-            player.displayClientMessage(Component.translatable("message.reverie.bed_full"), true);
+        if (!canEnterBed(player, wakingBed, pending.bedOwner())) {
+            player.displayClientMessage(Component.translatable("message.reverie.bed_reserved"), true);
             return;
         }
         if (pending.guest()) {
@@ -381,6 +382,10 @@ public final class ReverieEvents {
             showFigmentBoundary(player);
         }
         if (!event.getEntity().level().dimension().equals(Reverie.REVERIE_LEVEL)) return;
+        if (event.getEntity().level() instanceof ServerLevel reverie) {
+            long chosenTime = ReverieTimeData.get(reverie.getServer()).time();
+            if (reverie.getDayTime() != chosenTime) reverie.setDayTime(chosenTime);
+        }
         // Follow the dimension's configured floor, as Aether/Forgiving Void do,
         // instead of assuming a particular minimum Y for every world definition.
         if (event.getEntity() instanceof ServerPlayer player
@@ -746,6 +751,16 @@ public final class ReverieEvents {
         if (location == null || !BuiltInRegistries.ITEM.containsKey(location)) return null;
         Item item = BuiltInRegistries.ITEM.get(location);
         return item == Items.AIR ? null : item;
+    }
+
+    private static boolean canEnterBed(ServerPlayer player, BlockPos wakingBed, boolean owner) {
+        if (owner) return true;
+        ReverieBedLinksData links = ReverieBedLinksData.get(player.server);
+        int occupants = links.occupantCount(wakingBed);
+        int maximum = ReverieConfig.MAX_DREAMERS_PER_BED.get();
+        java.util.UUID bedOwner = ReverieBedOwnersData.get(player.server).owner(wakingBed);
+        boolean ownerPresent = bedOwner != null && links.containsDreamer(wakingBed, bedOwner);
+        return occupants < maximum && (ownerPresent || occupants < maximum - 1);
     }
 
     private static void feedback(ServerPlayer player, String category, String translation, Object... args) {

@@ -1,6 +1,7 @@
 package com.redgear.reverie;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
@@ -68,6 +69,17 @@ public final class ReverieCommands {
                         .then(Commands.literal("status").executes(context -> purgeStatus(context.getSource())))
                         .then(Commands.literal("stop").executes(context -> stopPurge(context.getSource()))))
                 .then(Commands.literal("doctor").executes(context -> doctor(context.getSource())))
+                .then(Commands.literal("time")
+                        .then(Commands.literal("query").executes(context -> queryTime(context.getSource())))
+                        .then(Commands.literal("day").executes(context -> setTime(context.getSource(), 1000L, "day")))
+                        .then(Commands.literal("noon").executes(context -> setTime(context.getSource(), 6000L, "noon")))
+                        .then(Commands.literal("night").executes(context -> setTime(context.getSource(), 13000L, "night")))
+                        .then(Commands.literal("midnight").executes(context -> setTime(context.getSource(), 18000L, "midnight")))
+                        .then(Commands.literal("reset").executes(context -> setTime(context.getSource(), ReverieTimeData.DEFAULT_TIME, "noon")))
+                        .then(Commands.literal("set")
+                                .then(Commands.argument("ticks", IntegerArgumentType.integer(0, 23999))
+                                        .executes(context -> setTime(context.getSource(),
+                                                IntegerArgumentType.getInteger(context, "ticks"), "custom")))))
                 .then(Commands.literal("cleanup").executes(context -> cleanup(context.getSource()))));
         Set<ResourceLocation> entitySuggestions = new HashSet<>(BuiltInRegistries.ENTITY_TYPE.keySet());
         dispatcher.register(Commands.literal("reverie").requires(source -> source.hasPermission(2))
@@ -345,5 +357,23 @@ public final class ReverieCommands {
         int result = cleaned;
         source.sendSuccess(() -> Component.literal("Reverie cleanup removed " + result + " stale record(s)."), true);
         return cleaned;
+    }
+
+    private static int setTime(CommandSourceStack source, long time, String label) {
+        ServerLevel level = source.getServer().getLevel(Reverie.REVERIE_LEVEL);
+        if (level == null) {
+            source.sendFailure(Component.literal("The Reverie is not currently loaded."));
+            return 0;
+        }
+        ReverieTimeData.get(source.getServer()).set(time);
+        level.setDayTime(Math.floorMod(time, 24000L));
+        source.sendSuccess(() -> Component.literal("Reverie lighting set to " + label + " (" + Math.floorMod(time, 24000L) + ")."), true);
+        return 1;
+    }
+
+    private static int queryTime(CommandSourceStack source) {
+        long time = ReverieTimeData.get(source.getServer()).time();
+        source.sendSuccess(() -> Component.literal("The Reverie clock is frozen at " + time + "."), false);
+        return (int) time;
     }
 }
