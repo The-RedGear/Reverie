@@ -58,6 +58,7 @@ public final class ReverieEvents {
     private static final java.util.Map<java.util.UUID, Long> ENTRY_CONFIRMATIONS = new java.util.HashMap<>();
     private static final java.util.Map<java.util.UUID, Long> BED_BREAK_CONFIRMATIONS = new java.util.HashMap<>();
     private static final java.util.Map<java.util.UUID, Long> BED_BREAK_CONFIRMATION_EXPIRES = new java.util.HashMap<>();
+    private static final java.util.Map<Long, java.util.UUID> BROKEN_BED_OWNERS = new java.util.HashMap<>();
     private static final java.util.Map<String, Long> FEEDBACK_COOLDOWNS = new java.util.HashMap<>();
     private static final java.util.Map<java.util.UUID, PendingDream> PENDING_DREAMS = new java.util.HashMap<>();
     private static long suppressSleepMessagesUntilTick;
@@ -707,8 +708,24 @@ public final class ReverieEvents {
         }
         if (player.level().dimension().equals(net.minecraft.world.level.Level.OVERWORLD)
                 && event.getPlacedBlock().is(Reverie.DREAMWEAVERS_BED.get())) {
+            ItemStack placedStack = player.getMainHandItem().is(Reverie.DREAMWEAVERS_BED_ITEM.get())
+                    ? player.getMainHandItem() : player.getOffhandItem();
+            java.util.UUID owner = DreamweaversBedItem.owner(placedStack);
+            if (owner == null) {
+                owner = player.getUUID();
+                DreamweaversBedItem.bind(placedStack, owner, player.getGameProfile().getName());
+            }
             ReverieBedOwnersData.get(player.server).set(
-                    bedFoot(event.getPos(), event.getPlacedBlock()), player.getUUID());
+                    bedFoot(event.getPos(), event.getPlacedBlock()), owner);
+        }
+    }
+
+    @SubscribeEvent
+    public static void bindCraftedBed(net.neoforged.neoforge.event.entity.player.PlayerEvent.ItemCraftedEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player
+                && event.getCrafting().is(Reverie.DREAMWEAVERS_BED_ITEM.get())
+                && DreamweaversBedItem.owner(event.getCrafting()) == null) {
+            DreamweaversBedItem.bind(event.getCrafting(), player.getUUID(), player.getGameProfile().getName());
         }
     }
 
@@ -740,10 +757,30 @@ public final class ReverieEvents {
             BED_BREAK_CONFIRMATIONS.remove(player.getUUID());
             BED_BREAK_CONFIRMATION_EXPIRES.remove(player.getUUID());
         }
+        java.util.UUID owner = ReverieBedOwnersData.get(level.getServer()).owner(brokenBed);
+        if (owner != null && event.getPlayer() != null && !event.getPlayer().isCreative()) {
+            BROKEN_BED_OWNERS.put(brokenBed.asLong(), owner);
+        }
         ReverieBedOwnersData.get(level.getServer()).remove(brokenBed);
         ServerLevel reverie = level.getServer().getLevel(Reverie.REVERIE_LEVEL);
         if (reverie == null) return;
         removeDreamBed(reverie, ReverieBedLinksData.get(level.getServer()).removeLink(brokenBed));
+    }
+
+    @SubscribeEvent
+    public static void preserveBrokenBedOwner(net.neoforged.neoforge.event.level.BlockDropsEvent event) {
+        if (!(event.getLevel() instanceof ServerLevel level)
+                || !level.dimension().equals(net.minecraft.world.level.Level.OVERWORLD)
+                || !event.getState().is(Reverie.DREAMWEAVERS_BED.get())) return;
+        BlockPos bed = bedFoot(event.getPos(), event.getState());
+        java.util.UUID owner = BROKEN_BED_OWNERS.remove(bed.asLong());
+        if (owner == null) return;
+        String name = playerName(level.getServer(), owner);
+        for (net.minecraft.world.entity.item.ItemEntity drop : event.getDrops()) {
+            if (drop.getItem().is(Reverie.DREAMWEAVERS_BED_ITEM.get())) {
+                DreamweaversBedItem.bind(drop.getItem(), owner, name);
+            }
+        }
     }
 
     @SubscribeEvent

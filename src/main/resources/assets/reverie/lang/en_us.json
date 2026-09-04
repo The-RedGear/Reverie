@@ -41,6 +41,8 @@
   "message.reverie.owner_left_waking": "The shared dream closes without its owner.",
   "message.reverie.overstay_warning": "You have lingered too long. Wake now, or the dream will leave you sluggish.",
   "tooltip.reverie.hold_shift": "Hold Shift for Dream Anchor information",
+  "tooltip.reverie.bound_to": "Bound to %s",
+  "tooltip.reverie.unbound": "Unbound — binds when placed",
   "tooltip.reverie.anchor.1": "Dream Anchors",
   "tooltip.reverie.anchor.2": "In the Reverie, use a Respawn Anchor on this bed to anchor it.",
   "tooltip.reverie.anchor.3": "Nearby Overworld beds connect across a 5x5-chunk region.",

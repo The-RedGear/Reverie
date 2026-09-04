@@ -25,6 +25,7 @@
 - Occupied beds now resolve disconnected players through Minecraft's profile cache instead of displaying a shortened UUID.
 - Sun-sensitive mobs no longer ignite from daylight in the Reverie, regardless of its selected lighting time. Ordinary fire and lava remain effective.
 - Removed the unreliable floating occupied-bed labels. Sneak-use now shows the bed owner, every current dreamer, and capacity together in the action bar.
+- Crafted Dreamweaver's Beds now bind permanently to their crafter. Loot and Creative beds bind to their first placer, ownership survives breaking and pickup, and the owner is shown in the item tooltip.
 
 ## 0.1.0 - Initial alpha
 
