@@ -8,6 +8,7 @@
 - Noon alone restores Reverie's original ambient-bright blank-canvas lighting, while every other time shows natural light and darkness.
 - Temporary lighting returns to noon when its controlling player leaves the Reverie or after a configurable timeout (five minutes by default).
 - Clock changes now synchronize immediately like vanilla time commands, midnight uses an Overworld-dark lightmap and near-black dream sky, and returning players receive their saved grass regions again on login.
+- Fully decoupled Reverie lighting time from the Overworld's shared world time and forced clear Reverie weather regardless of Overworld rain or thunder.
 
 ## 0.1.0 - Initial alpha
 

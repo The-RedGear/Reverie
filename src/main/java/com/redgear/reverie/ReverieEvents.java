@@ -5,6 +5,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundSetTimePacket;
+import net.minecraft.network.protocol.game.ClientboundGameEventPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.GameType;
@@ -176,11 +177,9 @@ public final class ReverieEvents {
         if (player.isShiftKeyDown()) {
             long next = Math.floorMod(time.time() + ReverieConfig.CLOCK_TIME_STEP.get(), 24000L);
             time.set(next);
-            ((ServerLevel) player.level()).setDayTime(next);
         } else {
             long next = nextLightingPreset(time.time());
             time.set(next);
-            ((ServerLevel) player.level()).setDayTime(next);
         }
         if (time.time() == ReverieTimeData.DEFAULT_TIME) {
             lightingController = null;
@@ -202,14 +201,13 @@ public final class ReverieEvents {
 
     @SubscribeEvent
     public static void resetTemporaryLighting(ServerTickEvent.Post event) {
-        if (lightingController == null) return;
-        ServerPlayer controller = event.getServer().getPlayerList().getPlayer(lightingController);
-        boolean controllerLeft = controller == null || !controller.level().dimension().equals(Reverie.REVERIE_LEVEL);
-        if (controllerLeft || event.getServer().getTickCount() >= lightingResetAtTick) {
+        if (lightingController != null) {
+            ServerPlayer controller = event.getServer().getPlayerList().getPlayer(lightingController);
+            boolean controllerLeft = controller == null || !controller.level().dimension().equals(Reverie.REVERIE_LEVEL);
+            if (controllerLeft || event.getServer().getTickCount() >= lightingResetAtTick) {
             ServerLevel reverie = event.getServer().getLevel(Reverie.REVERIE_LEVEL);
             ReverieTimeData.get(event.getServer()).set(ReverieTimeData.DEFAULT_TIME);
             if (reverie != null) {
-                reverie.setDayTime(ReverieTimeData.DEFAULT_TIME);
                 syncReverieTime(reverie, ReverieTimeData.DEFAULT_TIME);
                 for (ServerPlayer dreamer : reverie.players()) {
                     dreamer.displayClientMessage(Component.translatable("message.reverie.time_returned_noon"), true);
@@ -217,6 +215,16 @@ public final class ReverieEvents {
             }
             lightingController = null;
             lightingResetAtTick = Long.MAX_VALUE;
+            }
+        }
+        ServerLevel reverie = event.getServer().getLevel(Reverie.REVERIE_LEVEL);
+        if (reverie != null) {
+            reverie.setRainLevel(0.0F);
+            reverie.setThunderLevel(0.0F);
+            if (event.getServer().getTickCount() % 20 == 0) {
+                syncReverieTime(reverie, ReverieTimeData.get(event.getServer()).time());
+                syncClearWeather(reverie);
+            }
         }
     }
 
@@ -224,6 +232,14 @@ public final class ReverieEvents {
         ClientboundSetTimePacket packet = new ClientboundSetTimePacket(
                 reverie.getGameTime(), Math.floorMod(time, 24000L), false);
         for (ServerPlayer dreamer : reverie.players()) dreamer.connection.send(packet);
+    }
+
+    static void syncClearWeather(ServerLevel reverie) {
+        for (ServerPlayer dreamer : reverie.players()) {
+            dreamer.connection.send(new ClientboundGameEventPacket(ClientboundGameEventPacket.STOP_RAINING, 0.0F));
+            dreamer.connection.send(new ClientboundGameEventPacket(ClientboundGameEventPacket.RAIN_LEVEL_CHANGE, 0.0F));
+            dreamer.connection.send(new ClientboundGameEventPacket(ClientboundGameEventPacket.THUNDER_LEVEL_CHANGE, 0.0F));
+        }
     }
 
     private static long nextLightingPreset(long currentTime) {
@@ -333,6 +349,7 @@ public final class ReverieEvents {
         player.teleportTo(destination, arrivalBed.getX() + 0.5D, 33.0D, arrivalBed.getZ() + 0.5D,
                 player.getYRot(), player.getXRot());
         syncReverieTime(destination, ReverieTimeData.get(player.server).time());
+        syncClearWeather(destination);
         int grassColor = player.server.overworld().getBiome(wakingBed).value()
                 .getGrassColor(wakingBed.getX(), wakingBed.getZ());
         ReverieBiomeTintsData biomeTints = ReverieBiomeTintsData.get(player.server);
@@ -392,6 +409,7 @@ public final class ReverieEvents {
         if (session.active() && player.level().dimension().equals(Reverie.REVERIE_LEVEL)) {
             ReverieBiomeTintsData.get(player.server).sendTo(player);
             syncReverieTime((ServerLevel) player.level(), ReverieTimeData.get(player.server).time());
+            syncClearWeather((ServerLevel) player.level());
             return;
         }
         if (session.active() && !player.level().dimension().equals(Reverie.REVERIE_LEVEL)) {
@@ -485,8 +503,8 @@ public final class ReverieEvents {
         }
         if (!event.getEntity().level().dimension().equals(Reverie.REVERIE_LEVEL)) return;
         if (event.getEntity().level() instanceof ServerLevel reverie) {
-            long chosenTime = ReverieTimeData.get(reverie.getServer()).time();
-            if (reverie.getDayTime() != chosenTime) reverie.setDayTime(chosenTime);
+            // Reverie time is intentionally client-scoped and frozen. Writing to
+            // ServerLevel day time would mutate the Overworld's shared level data.
         }
         // Follow the dimension's configured floor, as Aether/Forgiving Void do,
         // instead of assuming a particular minimum Y for every world definition.
