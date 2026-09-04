@@ -278,7 +278,7 @@ public final class ReverieEvents {
         if (!bedState.is(Reverie.DREAMWEAVERS_BED.get())) return;
         java.util.UUID bedOwner = ReverieBedOwnersData.get(player.server).claimIfUnowned(wakingBed, player.getUUID());
         boolean isBedOwner = player.getUUID().equals(bedOwner);
-        if (!isBedOwner && !ReverieBedLinksData.get(player.server).containsDreamer(wakingBed, bedOwner)) {
+        if (!isBedOwner && !isBedOwnerPresent(player, wakingBed, bedOwner)) {
             player.displayClientMessage(Component.translatable("message.reverie.owner_must_enter_first",
                     playerName(player.server.getPlayerList().getPlayer(bedOwner), bedOwner)), true);
             return;
@@ -327,9 +327,10 @@ public final class ReverieEvents {
         }
         java.util.UUID currentOwner = ReverieBedOwnersData.get(player.server).owner(wakingBed);
         if (!pending.bedOwner() && (currentOwner == null
-                || !ReverieBedLinksData.get(player.server).containsDreamer(wakingBed, currentOwner))) {
+                || !isBedOwnerPresent(player, wakingBed, currentOwner))) {
             player.displayClientMessage(Component.translatable("message.reverie.owner_must_enter_first",
-                    playerName(player.server.getPlayerList().getPlayer(currentOwner), currentOwner)), true);
+                    currentOwner == null ? "Unknown" : playerName(
+                            player.server.getPlayerList().getPlayer(currentOwner), currentOwner)), true);
             return;
         }
         if (pending.guest()) {
@@ -579,7 +580,7 @@ public final class ReverieEvents {
             session.resetHostMissing();
             return false;
         }
-        if (ReverieBedLinksData.get(player.server).containsDreamer(wakingBed, owner)) {
+        if (isBedOwnerPresent(player, wakingBed, owner)) {
             session.resetHostMissing();
             return false;
         }
@@ -601,6 +602,14 @@ public final class ReverieEvents {
 
     private static String playerName(ServerPlayer online, java.util.UUID id) {
         return online == null ? id.toString().substring(0, 8) : online.getGameProfile().getName();
+    }
+
+    private static boolean isBedOwnerPresent(ServerPlayer player, BlockPos wakingBed, java.util.UUID owner) {
+        if (!ReverieBedLinksData.get(player.server).containsDreamer(wakingBed, owner)) return false;
+        ServerPlayer host = player.server.getPlayerList().getPlayer(owner);
+        if (host == null || !host.level().dimension().equals(Reverie.REVERIE_LEVEL)) return false;
+        ReverieSession hostSession = host.getData(ReverieSession.TYPE);
+        return hostSession.active() && wakingBed.equals(hostSession.wakingBed());
     }
 
     @SubscribeEvent
@@ -1007,7 +1016,7 @@ public final class ReverieEvents {
         int occupants = links.occupantCount(wakingBed);
         int maximum = ReverieConfig.MAX_DREAMERS_PER_BED.get();
         java.util.UUID bedOwner = ReverieBedOwnersData.get(player.server).owner(wakingBed);
-        boolean ownerPresent = bedOwner != null && links.containsDreamer(wakingBed, bedOwner);
+        boolean ownerPresent = bedOwner != null && isBedOwnerPresent(player, wakingBed, bedOwner);
         return occupants < maximum && (ownerPresent || occupants < maximum - 1);
     }
 

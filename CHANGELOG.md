@@ -20,6 +20,7 @@
 - Capped the guest host-absence grace period at 60 seconds, including automatic correction of older 180-second configs, and removed the redundant chat alert.
 - Moved occupied-bed floating names out of the bed block-entity renderer and into the reliable world render stage.
 - Occupied-bed labels now remain visible within 32 blocks without crosshair targeting. Waking now validates vanilla bed stand-up space and falls back to the player's respawn point or world spawn when the bed area is obstructed.
+- A bed owner who disconnects inside the Reverie now counts as absent: guests receive the configured countdown and awaken unless the owner reconnects to the same active dream session in time.
 
 ## 0.1.0 - Initial alpha
 
