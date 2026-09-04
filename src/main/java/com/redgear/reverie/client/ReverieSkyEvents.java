@@ -10,9 +10,9 @@ public final class ReverieSkyEvents {
     private static final float NOON_RED = 0.96F;
     private static final float NOON_GREEN = 0.97F;
     private static final float NOON_BLUE = 0.99F;
-    private static final float MIDNIGHT_RED = 0.18F;
-    private static final float MIDNIGHT_GREEN = 0.20F;
-    private static final float MIDNIGHT_BLUE = 0.24F;
+    private static final float MIDNIGHT_RED = 0.008F;
+    private static final float MIDNIGHT_GREEN = 0.012F;
+    private static final float MIDNIGHT_BLUE = 0.025F;
 
     private ReverieSkyEvents() {}
 

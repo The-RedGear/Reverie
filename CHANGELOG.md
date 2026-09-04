@@ -7,6 +7,7 @@
 - Using a Clock cycles through sunrise, noon, sunset, and midnight; sneaking while using it makes fine 1,000-tick adjustments.
 - Noon alone restores Reverie's original ambient-bright blank-canvas lighting, while every other time shows natural light and darkness.
 - Temporary lighting returns to noon when its controlling player leaves the Reverie or after a configurable timeout (five minutes by default).
+- Clock changes now synchronize immediately like vanilla time commands, midnight uses an Overworld-dark lightmap and near-black dream sky, and returning players receive their saved grass regions again on login.
 
 ## 0.1.0 - Initial alpha
 

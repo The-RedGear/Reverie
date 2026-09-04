@@ -4,6 +4,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundSetTimePacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.GameType;
@@ -189,6 +190,7 @@ public final class ReverieEvents {
             int resetMinutes = ReverieConfig.CLOCK_RESET_MINUTES.get();
             lightingResetAtTick = resetMinutes == 0 ? Long.MAX_VALUE : now + resetMinutes * 1200L;
         }
+        syncReverieTime((ServerLevel) player.level(), time.time());
         nextClockChangeTick = now + ReverieConfig.GLOBAL_CLOCK_COOLDOWN_TICKS.get();
         player.getCooldowns().addCooldown(Items.CLOCK, ReverieConfig.CLOCK_COOLDOWN_TICKS.get());
         for (ServerPlayer dreamer : ((ServerLevel) player.level()).players()) {
@@ -208,6 +210,7 @@ public final class ReverieEvents {
             ReverieTimeData.get(event.getServer()).set(ReverieTimeData.DEFAULT_TIME);
             if (reverie != null) {
                 reverie.setDayTime(ReverieTimeData.DEFAULT_TIME);
+                syncReverieTime(reverie, ReverieTimeData.DEFAULT_TIME);
                 for (ServerPlayer dreamer : reverie.players()) {
                     dreamer.displayClientMessage(Component.translatable("message.reverie.time_returned_noon"), true);
                 }
@@ -215,6 +218,12 @@ public final class ReverieEvents {
             lightingController = null;
             lightingResetAtTick = Long.MAX_VALUE;
         }
+    }
+
+    static void syncReverieTime(ServerLevel reverie, long time) {
+        ClientboundSetTimePacket packet = new ClientboundSetTimePacket(
+                reverie.getGameTime(), Math.floorMod(time, 24000L), false);
+        for (ServerPlayer dreamer : reverie.players()) dreamer.connection.send(packet);
     }
 
     private static long nextLightingPreset(long currentTime) {
@@ -323,6 +332,7 @@ public final class ReverieEvents {
         emitGust((ServerLevel) player.level(), wakingBed);
         player.teleportTo(destination, arrivalBed.getX() + 0.5D, 33.0D, arrivalBed.getZ() + 0.5D,
                 player.getYRot(), player.getXRot());
+        syncReverieTime(destination, ReverieTimeData.get(player.server).time());
         int grassColor = player.server.overworld().getBiome(wakingBed).value()
                 .getGrassColor(wakingBed.getX(), wakingBed.getZ());
         ReverieBiomeTintsData biomeTints = ReverieBiomeTintsData.get(player.server);
@@ -379,6 +389,11 @@ public final class ReverieEvents {
     public static void recoverOnLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         ReverieSession session = player.getData(ReverieSession.TYPE);
+        if (session.active() && player.level().dimension().equals(Reverie.REVERIE_LEVEL)) {
+            ReverieBiomeTintsData.get(player.server).sendTo(player);
+            syncReverieTime((ServerLevel) player.level(), ReverieTimeData.get(player.server).time());
+            return;
+        }
         if (session.active() && !player.level().dimension().equals(Reverie.REVERIE_LEVEL)) {
             CompoundTag wakingPlayer = session.wakingPlayer();
             BlockPos bedToRemove = ReverieBedLinksData.get(player.server).leave(session.wakingBed(), player.getUUID());

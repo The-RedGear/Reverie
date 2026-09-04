@@ -371,6 +371,7 @@ public final class ReverieCommands {
         }
         ReverieTimeData.get(source.getServer()).set(time);
         level.setDayTime(Math.floorMod(time, 24000L));
+        ReverieEvents.syncReverieTime(level, time);
         source.sendSuccess(() -> Component.literal("Reverie lighting set to " + label + " (" + Math.floorMod(time, 24000L) + ")."), true);
         return 1;
     }
