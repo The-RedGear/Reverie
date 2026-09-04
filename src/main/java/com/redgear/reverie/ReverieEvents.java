@@ -561,11 +561,6 @@ public final class ReverieEvents {
             return false;
         }
         session.tickHostMissing();
-        if (!session.hostMissingWarned()) {
-            int seconds = ReverieConfig.OWNER_ABSENCE_GRACE_SECONDS.get();
-            player.displayClientMessage(Component.translatable("message.reverie.owner_left_grace", seconds), false);
-            session.markHostMissingWarned();
-        }
         long maximumTicks = ReverieConfig.OWNER_ABSENCE_GRACE_SECONDS.get() * 20L;
         if (maximumTicks > 0L && (session.hostMissingTicks() - 1L) % 20L == 0L) {
             long secondsRemaining = Math.max(1L,
