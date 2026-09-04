@@ -1,7 +1,6 @@
 package com.redgear.reverie.client;
 
 import com.redgear.reverie.Reverie;
-import com.redgear.reverie.ReverieBiomeTintPayload;
 import net.minecraft.client.renderer.BiomeColors;
 import net.minecraft.client.renderer.DimensionSpecialEffects;
 import javax.annotation.Nullable;
@@ -16,18 +15,14 @@ import net.neoforged.neoforge.client.event.RegisterDimensionSpecialEffectsEvent;
 import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
-import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.GrassColor;
 
-import java.util.HashMap;
-import java.util.Map;
 
 @EventBusSubscriber(modid = Reverie.MOD_ID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
 public final class ReverieClient {
-    private static final Map<Long, Integer> GRASS_TINTS = new HashMap<>();
+    private static final int PLAINS_GRASS_COLOR = 0x91BD59;
     private ReverieClient() {}
 
     @SubscribeEvent
@@ -47,22 +42,10 @@ public final class ReverieClient {
         event.register((state, level, pos, tintIndex) -> {
             if (level != null && pos != null && level instanceof ClientLevel client
                     && client.dimension().equals(Reverie.REVERIE_LEVEL)) {
-                Integer tint = GRASS_TINTS.get(ChunkPos.asLong(pos.getX() >> 4, pos.getZ() >> 4));
-                if (tint != null) return tint;
+                return PLAINS_GRASS_COLOR;
             }
             return level == null || pos == null ? GrassColor.getDefaultColor() : BiomeColors.getAverageGrassColor(level, pos);
         }, Blocks.GRASS_BLOCK, Blocks.SHORT_GRASS, Blocks.TALL_GRASS, Blocks.FERN, Blocks.LARGE_FERN);
-    }
-
-    public static void handleBiomeTint(ReverieBiomeTintPayload payload, IPayloadContext context) {
-        if (payload.reset()) GRASS_TINTS.clear();
-        for (int dx = -payload.radius(); dx <= payload.radius(); dx++) {
-            for (int dz = -payload.radius(); dz <= payload.radius(); dz++) {
-                GRASS_TINTS.put(ChunkPos.asLong(payload.centerChunkX() + dx, payload.centerChunkZ() + dz),
-                        payload.grassColor());
-            }
-        }
-        net.minecraft.client.Minecraft.getInstance().levelRenderer.allChanged();
     }
 
     private static final class WhiteEffects extends DimensionSpecialEffects {

@@ -20,15 +20,27 @@ public final class ReverieSkyEvents {
         ClientLevel level = Minecraft.getInstance().level;
         if (level == null || !level.dimension().equals(Reverie.REVERIE_LEVEL)) return;
 
-        float time = level.getTimeOfDay((float) event.getPartialTick());
-        float daylight = Mth.clamp((Mth.cos((time - 0.25F) * Mth.TWO_PI) + 1.0F) * 0.5F,
-                0.0F, 1.0F);
-        // Smooth the endpoints so noon and midnight hold their intended appearance
-        // instead of changing abruptly as the Clock crosses them.
-        daylight = daylight * daylight * (3.0F - 2.0F * daylight);
-
-        event.setRed(Mth.lerp(daylight, MIDNIGHT_RED, NOON_RED));
-        event.setGreen(Mth.lerp(daylight, MIDNIGHT_GREEN, NOON_GREEN));
-        event.setBlue(Mth.lerp(daylight, MIDNIGHT_BLUE, NOON_BLUE));
+        long ticks = Math.floorMod(level.getDayTime(), 24000L);
+        float[] from;
+        float[] to;
+        float progress;
+        if (ticks < 6000L) {
+            from = DAWN; to = NOON; progress = ticks / 6000.0F;
+        } else if (ticks < 12000L) {
+            from = NOON; to = DUSK; progress = (ticks - 6000L) / 6000.0F;
+        } else if (ticks < 18000L) {
+            from = DUSK; to = MIDNIGHT; progress = (ticks - 12000L) / 6000.0F;
+        } else {
+            from = MIDNIGHT; to = DAWN; progress = (ticks - 18000L) / 6000.0F;
+        }
+        progress = progress * progress * (3.0F - 2.0F * progress);
+        event.setRed(Mth.lerp(progress, from[0], to[0]));
+        event.setGreen(Mth.lerp(progress, from[1], to[1]));
+        event.setBlue(Mth.lerp(progress, from[2], to[2]));
     }
+
+    private static final float[] DAWN = {0.92F, 0.94F, 0.98F};
+    private static final float[] NOON = {NOON_RED, NOON_GREEN, NOON_BLUE};
+    private static final float[] DUSK = {0.42F, 0.44F, 0.50F};
+    private static final float[] MIDNIGHT = {MIDNIGHT_RED, MIDNIGHT_GREEN, MIDNIGHT_BLUE};
 }

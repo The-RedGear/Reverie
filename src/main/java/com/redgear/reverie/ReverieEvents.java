@@ -190,6 +190,11 @@ public final class ReverieEvents {
             lightingResetAtTick = resetMinutes == 0 ? Long.MAX_VALUE : now + resetMinutes * 1200L;
         }
         syncReverieTime((ServerLevel) player.level(), time.time());
+        ResourceLocation bubblePopId = ResourceLocation.withDefaultNamespace("ui.hud.bubble_pop");
+        net.minecraft.sounds.SoundEvent adjustmentSound = BuiltInRegistries.SOUND_EVENT.containsKey(bubblePopId)
+                ? BuiltInRegistries.SOUND_EVENT.get(bubblePopId) : SoundEvents.BUBBLE_COLUMN_BUBBLE_POP;
+        player.level().playSound(null, player.blockPosition(), adjustmentSound,
+                SoundSource.PLAYERS, 0.65F, 1.15F);
         nextClockChangeTick = now + ReverieConfig.GLOBAL_CLOCK_COOLDOWN_TICKS.get();
         player.getCooldowns().addCooldown(Items.CLOCK, ReverieConfig.CLOCK_COOLDOWN_TICKS.get());
         for (ServerPlayer dreamer : ((ServerLevel) player.level()).players()) {
@@ -350,13 +355,6 @@ public final class ReverieEvents {
                 player.getYRot(), player.getXRot());
         syncReverieTime(destination, ReverieTimeData.get(player.server).time());
         syncClearWeather(destination);
-        int grassColor = player.server.overworld().getBiome(wakingBed).value()
-                .getGrassColor(wakingBed.getX(), wakingBed.getZ());
-        ReverieBiomeTintsData biomeTints = ReverieBiomeTintsData.get(player.server);
-        // Tint the project site around the actual Reverie anchor. Anchors may be
-        // moved independently of the waking bed while retaining their link.
-        biomeTints.remember(arrivalBed.getX() >> 4, arrivalBed.getZ() >> 4, grassColor);
-        biomeTints.sendTo(player);
         emitGust(destination, arrivalBed);
         playTransitionSound(destination, arrivalBed, true);
         player.setGameMode(GameType.CREATIVE);
@@ -407,7 +405,6 @@ public final class ReverieEvents {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         ReverieSession session = player.getData(ReverieSession.TYPE);
         if (session.active() && player.level().dimension().equals(Reverie.REVERIE_LEVEL)) {
-            ReverieBiomeTintsData.get(player.server).sendTo(player);
             syncReverieTime((ServerLevel) player.level(), ReverieTimeData.get(player.server).time());
             syncClearWeather((ServerLevel) player.level());
             return;
