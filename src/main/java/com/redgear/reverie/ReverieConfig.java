@@ -32,7 +32,7 @@ public final class ReverieConfig {
         builder.push("bed_access");
         MAX_DREAMERS_PER_BED = builder.comment("Maximum simultaneous dreamers linked through one Overworld bed.")
                 .defineInRange("maxDreamersPerBed", 2, 1, 100);
-        SHARED_BED_COST_ITEM = builder.comment("Item a guest must use on a bed that already has a dreamer. Empty disables the cost.")
+        SHARED_BED_COST_ITEM = builder.comment("Item a non-owner must use to enter another player's bed. Empty disables the cost.")
                 .define("sharedBedCostItem", "minecraft:amethyst_shard");
         CONSUME_SHARED_BED_COST = builder.comment("Whether the guest entry item is consumed after a successful transition.")
                 .define("consumeSharedBedCost", true);

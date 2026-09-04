@@ -278,13 +278,12 @@ public final class ReverieEvents {
         if (!bedState.is(Reverie.DREAMWEAVERS_BED.get())) return;
         java.util.UUID bedOwner = ReverieBedOwnersData.get(player.server).claimIfUnowned(wakingBed, player.getUUID());
         boolean isBedOwner = player.getUUID().equals(bedOwner);
-        int occupants = ReverieBedLinksData.get(player.server).occupantCount(wakingBed);
         if (!canEnterBed(player, wakingBed, isBedOwner)) {
             player.displayClientMessage(Component.translatable("message.reverie.bed_reserved"), true);
             return;
         }
         Item sharedCost = configuredItem(ReverieConfig.SHARED_BED_COST_ITEM.get());
-        boolean guest = !isBedOwner && occupants > 0 && sharedCost != null && !player.isCreative();
+        boolean guest = !isBedOwner && sharedCost != null && !player.isCreative();
         if (guest && !player.getItemInHand(hand).is(sharedCost)) {
             player.displayClientMessage(Component.translatable("message.reverie.guest_cost", sharedCost.getDescription()), true);
             return;

@@ -13,6 +13,7 @@
 - Defined the Lucid Expanse biome's grass color directly as `#91BD59` so biome-level and modded rendering paths use the same tint.
 - Looking at an occupied Dreamweaver's Bed now shows its current dreamers above it, with the active owner accented and guests in white.
 - Breaking an occupied Dreamweaver's Bed now requires a second deliberate break attempt after a warning.
+- Non-owners must now pay the configured guest-entry cost when using another player's bed even while it is unoccupied; owners and creative players remain exempt.
 
 ## 0.1.0 - Initial alpha
 
