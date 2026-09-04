@@ -4,6 +4,7 @@ import com.redgear.reverie.Reverie;
 import com.redgear.reverie.ReverieBiomeTintPayload;
 import net.minecraft.client.renderer.BiomeColors;
 import net.minecraft.client.renderer.DimensionSpecialEffects;
+import javax.annotation.Nullable;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -57,12 +58,19 @@ public final class ReverieClient {
 
     private static final class WhiteEffects extends DimensionSpecialEffects {
         private WhiteEffects() {
-            super(Float.NaN, true, SkyType.NONE, true, true);
+            super(Float.NaN, true, SkyType.NONE, false, false);
         }
 
         @Override
         public Vec3 getBrightnessDependentFogColor(Vec3 color, float daylight) {
-            return new Vec3(0.96D, 0.97D, 0.99D);
+            double brightness = 0.18D + 0.82D * daylight;
+            return new Vec3(0.96D * brightness, 0.97D * brightness, 0.99D * brightness);
+        }
+
+        @Nullable
+        @Override
+        public float[] getSunriseColor(float timeOfDay, float partialTicks) {
+            return null;
         }
 
         @Override

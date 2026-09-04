@@ -31,6 +31,8 @@ import net.neoforged.bus.api.EventPriority;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDropsEvent;
+import net.neoforged.neoforge.event.entity.living.MobSpawnEvent;
+import net.minecraft.world.entity.MobSpawnType;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.CanContinueSleepingEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
@@ -487,6 +489,27 @@ public final class ReverieEvents {
         }
     }
 
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void allowCageSpawnerPlacement(MobSpawnEvent.SpawnPlacementCheck event) {
+        if (event.getSpawnType() != MobSpawnType.SPAWNER || !(event.getLevel() instanceof ServerLevel level)
+                || !level.dimension().equals(Reverie.REVERIE_LEVEL)) return;
+        ResourceLocation type = BuiltInRegistries.ENTITY_TYPE.getKey(event.getEntityType());
+        if (canCageSpawn(level, event.getPos(), type)) {
+            event.setResult(MobSpawnEvent.SpawnPlacementCheck.Result.SUCCEED);
+        }
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void allowCageSpawnerPosition(MobSpawnEvent.PositionCheck event) {
+        if (event.getSpawnType() != MobSpawnType.SPAWNER || event.getSpawner() == null
+                || !(event.getLevel() instanceof ServerLevel level)
+                || !level.dimension().equals(Reverie.REVERIE_LEVEL)) return;
+        ResourceLocation type = BuiltInRegistries.ENTITY_TYPE.getKey(event.getEntity().getType());
+        if (canCageSpawn(level, event.getEntity().blockPosition(), type)) {
+            event.setResult(MobSpawnEvent.PositionCheck.Result.SUCCEED);
+        }
+    }
+
     @SubscribeEvent
     public static void containFigments(EntityTickEvent.Post event) {
         if (!(event.getEntity() instanceof Mob mob) || !(mob.level() instanceof ServerLevel level)
@@ -727,6 +750,12 @@ public final class ReverieEvents {
         int maxX = (chunk.x + radius + 1) << 4, maxZ = (chunk.z + radius + 1) << 4;
         return level.getEntitiesOfClass(Mob.class,
                 new AABB(minX, level.getMinBuildHeight(), minZ, maxX, level.getMaxBuildHeight(), maxZ)).size();
+    }
+
+    private static boolean canCageSpawn(ServerLevel level, BlockPos pos, ResourceLocation type) {
+        BlockPos cage = FigmentCagesData.get(level.getServer()).cageFor(pos);
+        return cage != null && ReverieMobAllowlistData.get(level.getServer()).contains(type)
+                && cagePopulation(level, cage) < ReverieConfig.FIGMENT_CAGE_MAX_MOBS.get();
     }
 
     private static void showFigmentBoundary(ServerPlayer player) {

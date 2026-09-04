@@ -20,6 +20,8 @@
 - Added Overworld-biome grass tinting around each entry location without modifying or regenerating existing Reverie chunks.
 - Persisted learned grass-tint regions across visits and fixed gray inventory grass rendering.
 - Preserved Reverie's original pearly full-bright appearance at noon while allowing darker Clock settings to expose testable lighting.
+- Removed vanilla sunrise and sunset colors from the Reverie and made darker times use a stable neutral-gray sky.
+- Made Figment Cages authorize vanilla mob-spawner placement and light checks while retaining region, deny-list, collision, and population protections.
 - Added sneak-use bed information for ownership, occupancy, capacity, and owner reservation.
 - Clarified on the Figment Cage that hostile spawners still require darkness.
 - Added three Reverie advancements for obtaining the bed, entering the dreamscape, and charging a Figment Cage.
