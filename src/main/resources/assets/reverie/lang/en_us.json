@@ -30,6 +30,7 @@
   "message.reverie.time_advanced_by": "%s shifted the Reverie to %s ticks.",
   "message.reverie.time_reset_by": "%s returned the Reverie to noon (%s ticks).",
   "message.reverie.time_preset_by": "%s shifted the Reverie to a key lighting time (%s ticks).",
+  "message.reverie.time_returned_noon": "The Reverie settles back into noon.",
   "message.reverie.bed_info_owner": "This is your bed. %s/%s places are occupied; your place is always reserved.",
   "message.reverie.bed_info_guest": "This bed belongs to another dreamer. %s/%s places are occupied.",
   "message.reverie.guest_cost": "This bed is occupied. Use it while holding %s to join the dream.",

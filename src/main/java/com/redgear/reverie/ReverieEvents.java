@@ -42,6 +42,7 @@ import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.event.level.ExplosionEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.event.LootTableLoadEvent;
 import net.minecraft.world.level.storage.loot.LootPool;
 import net.minecraft.world.level.storage.loot.entries.LootItem;
@@ -56,6 +57,8 @@ public final class ReverieEvents {
     private static long suppressSleepMessagesUntilTick;
     private static final long DREAM_TRANSITION_TICKS = 40L;
     private static long nextClockChangeTick;
+    private static java.util.UUID lightingController;
+    private static long lightingResetAtTick = Long.MAX_VALUE;
     private ReverieEvents() {}
 
     public static boolean shouldSuppressSleepStatus(net.minecraft.server.MinecraftServer server) {
@@ -170,20 +173,47 @@ public final class ReverieEvents {
         player.swing(event.getHand(), true);
         ReverieTimeData time = ReverieTimeData.get(player.server);
         if (player.isShiftKeyDown()) {
-            long next = nextLightingPreset(time.time());
-            time.set(next);
-            ((ServerLevel) player.level()).setDayTime(next);
-        } else {
             long next = Math.floorMod(time.time() + ReverieConfig.CLOCK_TIME_STEP.get(), 24000L);
             time.set(next);
             ((ServerLevel) player.level()).setDayTime(next);
+        } else {
+            long next = nextLightingPreset(time.time());
+            time.set(next);
+            ((ServerLevel) player.level()).setDayTime(next);
+        }
+        if (time.time() == ReverieTimeData.DEFAULT_TIME) {
+            lightingController = null;
+            lightingResetAtTick = Long.MAX_VALUE;
+        } else {
+            lightingController = player.getUUID();
+            int resetMinutes = ReverieConfig.CLOCK_RESET_MINUTES.get();
+            lightingResetAtTick = resetMinutes == 0 ? Long.MAX_VALUE : now + resetMinutes * 1200L;
         }
         nextClockChangeTick = now + ReverieConfig.GLOBAL_CLOCK_COOLDOWN_TICKS.get();
         player.getCooldowns().addCooldown(Items.CLOCK, ReverieConfig.CLOCK_COOLDOWN_TICKS.get());
         for (ServerPlayer dreamer : ((ServerLevel) player.level()).players()) {
             dreamer.displayClientMessage(Component.translatable(player.isShiftKeyDown()
-                    ? "message.reverie.time_preset_by" : "message.reverie.time_advanced_by",
+                    ? "message.reverie.time_advanced_by" : "message.reverie.time_preset_by",
                     player.getDisplayName(), time.time()), true);
+        }
+    }
+
+    @SubscribeEvent
+    public static void resetTemporaryLighting(ServerTickEvent.Post event) {
+        if (lightingController == null) return;
+        ServerPlayer controller = event.getServer().getPlayerList().getPlayer(lightingController);
+        boolean controllerLeft = controller == null || !controller.level().dimension().equals(Reverie.REVERIE_LEVEL);
+        if (controllerLeft || event.getServer().getTickCount() >= lightingResetAtTick) {
+            ServerLevel reverie = event.getServer().getLevel(Reverie.REVERIE_LEVEL);
+            ReverieTimeData.get(event.getServer()).set(ReverieTimeData.DEFAULT_TIME);
+            if (reverie != null) {
+                reverie.setDayTime(ReverieTimeData.DEFAULT_TIME);
+                for (ServerPlayer dreamer : reverie.players()) {
+                    dreamer.displayClientMessage(Component.translatable("message.reverie.time_returned_noon"), true);
+                }
+            }
+            lightingController = null;
+            lightingResetAtTick = Long.MAX_VALUE;
         }
     }
 

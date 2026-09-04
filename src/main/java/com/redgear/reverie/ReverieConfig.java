@@ -18,6 +18,7 @@ public final class ReverieConfig {
     public static final ModConfigSpec.IntValue CLOCK_TIME_STEP;
     public static final ModConfigSpec.IntValue CLOCK_COOLDOWN_TICKS;
     public static final ModConfigSpec.IntValue GLOBAL_CLOCK_COOLDOWN_TICKS;
+    public static final ModConfigSpec.IntValue CLOCK_RESET_MINUTES;
     public static final ModConfigSpec.IntValue FIGMENT_CAGE_CHUNK_RADIUS;
     public static final ModConfigSpec.IntValue FIGMENT_CAGE_MAX_MOBS;
     public static final ModConfigSpec.ConfigValue<String> FIGMENT_CAGE_CHARGE_ITEM;
@@ -46,6 +47,8 @@ public final class ReverieConfig {
                 .defineInRange("clockCooldownTicks", 40, 1, 1200);
         GLOBAL_CLOCK_COOLDOWN_TICKS = builder.comment("Shared cooldown before any dreamer can change time again.")
                 .defineInRange("globalClockCooldownTicks", 40, 1, 1200);
+        CLOCK_RESET_MINUTES = builder.comment("Minutes before player-selected lighting returns to noon. Zero disables the timer; the setting player leaving always resets it.")
+                .defineInRange("returnToNoonMinutes", 5, 0, 1440);
         builder.pop();
 
         builder.push("dream_inventory");
