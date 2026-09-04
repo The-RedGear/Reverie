@@ -6,6 +6,7 @@
   "mixins": [
     "PlayerAdvancementsMixin",
     "ServerLevelMixin",
+    "MobMixin",
     "LevelBlockPlacementMixin",
     "compat.CreateSchematicannonBlockMixin",
     "compat.CreateSchematicPlacePacketMixin"
