@@ -10,6 +10,7 @@
 - Clock changes now synchronize immediately like vanilla time commands, midnight uses an Overworld-dark lightmap and near-black dream sky, and returning players receive their saved grass regions again on login.
 - Fully decoupled Reverie lighting time from the Overworld's shared world time and forced clear Reverie weather regardless of Overworld rain or thunder.
 - Replaced the daylight-derived sky curve with explicit dawn, noon, dusk, and midnight colors, added a bubble-pop adjustment cue, and standardized Reverie grass to the vanilla plains color.
+- Defined the Lucid Expanse biome's grass color directly as `#91BD59` so biome-level and modded rendering paths use the same tint.
 
 ## 0.1.0 - Initial alpha
 

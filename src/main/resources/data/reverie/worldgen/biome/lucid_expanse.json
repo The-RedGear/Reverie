@@ -7,6 +7,7 @@
     "water_color": 4159204,
     "water_fog_color": 329011,
     "sky_color": 15792383,
+    "grass_color": 9551193,
     "particle": { "options": { "type": "minecraft:end_rod" }, "probability": 0.0008 },
     "music": { "sound": "minecraft:music.creative", "min_delay": 12000, "max_delay": 24000, "replace_current_music": false }
   },
