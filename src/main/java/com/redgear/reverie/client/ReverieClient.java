@@ -39,7 +39,6 @@ public final class ReverieClient {
         // Register explicitly on the gameplay bus. The subscriber bus selector is
         // deprecated in current NeoForge and was not reliably attaching this handler.
         event.enqueueWork(() -> NeoForge.EVENT_BUS.addListener(ReverieSkyEvents::computeFogColor));
-        event.enqueueWork(() -> NeoForge.EVENT_BUS.addListener(ReverieBedLabelRenderer::render));
     }
 
     @SubscribeEvent
@@ -54,8 +53,10 @@ public final class ReverieClient {
     }
 
     public static void handleBedOccupancy(ReverieBedOccupancyPayload payload, IPayloadContext context) {
-        if (!payload.visible()) occupiedBeds.clear();
-        else occupiedBeds.put(payload.bedPos(), payload);
+        context.enqueueWork(() -> {
+            if (!payload.visible()) occupiedBeds.clear();
+            else occupiedBeds.put(payload.bedPos(), payload);
+        });
     }
 
     public static java.util.Collection<ReverieBedOccupancyPayload> occupiedBeds() {
