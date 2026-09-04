@@ -8,6 +8,7 @@ public final class ReverieConfig {
     public static final ModConfigSpec.IntValue MAX_DREAMERS_PER_BED;
     public static final ModConfigSpec.ConfigValue<String> SHARED_BED_COST_ITEM;
     public static final ModConfigSpec.BooleanValue CONSUME_SHARED_BED_COST;
+    public static final ModConfigSpec.IntValue OWNER_ABSENCE_GRACE_SECONDS;
     public static final ModConfigSpec.BooleanValue ANCHOR_DREAM_INVENTORIES;
     public static final ModConfigSpec.IntValue OVERSTAY_WARNING_MINUTES;
     public static final ModConfigSpec.IntValue MAX_DREAM_MINUTES;
@@ -36,6 +37,8 @@ public final class ReverieConfig {
                 .define("sharedBedCostItem", "minecraft:amethyst_shard");
         CONSUME_SHARED_BED_COST = builder.comment("Whether the guest entry item is consumed after a successful transition.")
                 .define("consumeSharedBedCost", true);
+        OWNER_ABSENCE_GRACE_SECONDS = builder.comment("Seconds guests may remain after the bed owner leaves the Reverie. Zero wakes them immediately.")
+                .defineInRange("ownerAbsenceGraceSeconds", 180, 0, 3600);
         builder.pop();
 
         builder.push("reverie_time");

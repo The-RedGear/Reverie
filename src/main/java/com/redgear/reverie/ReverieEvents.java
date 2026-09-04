@@ -61,6 +61,7 @@ public final class ReverieEvents {
     private static final java.util.Map<java.util.UUID, Long> BED_BREAK_CONFIRMATION_EXPIRES = new java.util.HashMap<>();
     private static final java.util.Map<String, Long> FEEDBACK_COOLDOWNS = new java.util.HashMap<>();
     private static final java.util.Map<java.util.UUID, PendingDream> PENDING_DREAMS = new java.util.HashMap<>();
+    private static final java.util.Map<java.util.UUID, Long> GUEST_HOST_GRACE_DEADLINES = new java.util.HashMap<>();
     private static long suppressSleepMessagesUntilTick;
     private static final long DREAM_TRANSITION_TICKS = 40L;
     private static long nextClockChangeTick;
@@ -278,6 +279,10 @@ public final class ReverieEvents {
         if (!bedState.is(Reverie.DREAMWEAVERS_BED.get())) return;
         java.util.UUID bedOwner = ReverieBedOwnersData.get(player.server).claimIfUnowned(wakingBed, player.getUUID());
         boolean isBedOwner = player.getUUID().equals(bedOwner);
+        if (!isBedOwner && !ReverieBedLinksData.get(player.server).containsDreamer(wakingBed, bedOwner)) {
+            player.displayClientMessage(Component.translatable("message.reverie.owner_must_enter_first"), true);
+            return;
+        }
         if (!canEnterBed(player, wakingBed, isBedOwner)) {
             player.displayClientMessage(Component.translatable("message.reverie.bed_reserved"), true);
             return;
@@ -318,6 +323,12 @@ public final class ReverieEvents {
         }
         if (!canEnterBed(player, wakingBed, pending.bedOwner())) {
             player.displayClientMessage(Component.translatable("message.reverie.bed_reserved"), true);
+            return;
+        }
+        java.util.UUID currentOwner = ReverieBedOwnersData.get(player.server).owner(wakingBed);
+        if (!pending.bedOwner() && (currentOwner == null
+                || !ReverieBedLinksData.get(player.server).containsDreamer(wakingBed, currentOwner))) {
+            player.displayClientMessage(Component.translatable("message.reverie.owner_must_enter_first"), true);
             return;
         }
         if (pending.guest()) {
@@ -377,6 +388,7 @@ public final class ReverieEvents {
     static boolean awaken(ServerPlayer player, net.minecraft.core.BlockPos usedBed) {
         ReverieSession session = player.getData(ReverieSession.TYPE);
         if (!session.active()) return false;
+        GUEST_HOST_GRACE_DEADLINES.remove(player.getUUID());
         CompoundTag wakingPlayer = session.wakingPlayer();
         long dreamDuration = session.dreamElapsedTicks();
         if (session.anchorInventory() && session.dreamBed() != null
@@ -525,6 +537,7 @@ public final class ReverieEvents {
             ReverieSession session = dreamer.getData(ReverieSession.TYPE);
             if (session.active()) {
                 session.tickDream();
+                if (enforceGuestHostPresence(dreamer, session)) return;
                 enforceDreamTime(dreamer, session);
                 if (dreamer.tickCount % 5 == 0) {
                     ModdedInventoryBridge.ejectBlocked(dreamer, stack -> isBlocked(dreamer, stack));
@@ -532,6 +545,30 @@ public final class ReverieEvents {
                 }
             }
         }
+    }
+
+    private static boolean enforceGuestHostPresence(ServerPlayer player, ReverieSession session) {
+        BlockPos wakingBed = session.wakingBed();
+        java.util.UUID owner = ReverieBedOwnersData.get(player.server).owner(wakingBed);
+        if (owner == null || owner.equals(player.getUUID())) {
+            GUEST_HOST_GRACE_DEADLINES.remove(player.getUUID());
+            return false;
+        }
+        if (ReverieBedLinksData.get(player.server).containsDreamer(wakingBed, owner)) {
+            GUEST_HOST_GRACE_DEADLINES.remove(player.getUUID());
+            return false;
+        }
+        long deadline = GUEST_HOST_GRACE_DEADLINES.computeIfAbsent(player.getUUID(), ignored -> {
+            int seconds = ReverieConfig.OWNER_ABSENCE_GRACE_SECONDS.get();
+            player.displayClientMessage(Component.translatable("message.reverie.owner_left_grace", seconds), false);
+            return player.server.getTickCount() + seconds * 20L;
+        });
+        if (player.server.getTickCount() >= deadline) {
+            player.displayClientMessage(Component.translatable("message.reverie.owner_left_waking"), false);
+            awaken(player, null);
+            return true;
+        }
+        return false;
     }
 
     @SubscribeEvent
