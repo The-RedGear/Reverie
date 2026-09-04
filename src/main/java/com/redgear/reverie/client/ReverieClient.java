@@ -63,8 +63,9 @@ public final class ReverieClient {
 
         @Override
         public Vec3 getBrightnessDependentFogColor(Vec3 color, float daylight) {
-            double brightness = 0.18D + 0.82D * daylight;
-            return new Vec3(0.96D * brightness, 0.97D * brightness, 0.99D * brightness);
+            // The final, time-driven color is applied by ReverieSkyEvents after
+            // Minecraft has completed its normal fog calculations.
+            return new Vec3(0.96D, 0.97D, 0.99D);
         }
 
         @Nullable

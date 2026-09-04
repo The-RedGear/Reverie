@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Made the Reverie sky smoothly follow its selected time, blending from the original pearly-white noon to a cool dark-gray midnight without orange sunrise or sunset tones.
+
 ## 0.1.0 - Initial alpha
 
 - Added the Dreamweaver's Bed and coordinate-aligned Reverie dimension.
