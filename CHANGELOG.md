@@ -24,6 +24,7 @@
 - Rebuilt occupied-bed names around Minecraft's native nametag drawing path, with direct client event registration, render-thread-safe occupancy updates, and the proper entity-effect render stage.
 - Occupied beds now resolve disconnected players through Minecraft's profile cache instead of displaying a shortened UUID.
 - Sun-sensitive mobs no longer ignite from daylight in the Reverie, regardless of its selected lighting time. Ordinary fire and lava remain effective.
+- Removed the unreliable floating occupied-bed labels. Sneak-use now shows the bed owner, every current dreamer, and capacity together in the action bar.
 
 ## 0.1.0 - Initial alpha
 

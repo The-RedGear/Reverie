@@ -47,7 +47,6 @@ import net.neoforged.neoforge.event.level.ExplosionEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
-import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.event.LootTableLoadEvent;
 import net.minecraft.world.level.storage.loot.LootPool;
 import net.minecraft.world.level.storage.loot.entries.LootItem;
@@ -536,7 +535,7 @@ public final class ReverieEvents {
                 }
             }
             showAnchorCoverage(player);
-            showOccupiedBeds(player);
+            showOccupiedBedEffects(player);
             showFigmentBoundary(player);
         }
         if (!event.getEntity().level().dimension().equals(Reverie.REVERIE_LEVEL)) return;
@@ -907,25 +906,10 @@ public final class ReverieEvents {
         }
     }
 
-    private static void showOccupiedBeds(ServerPlayer player) {
+    private static void showOccupiedBedEffects(ServerPlayer player) {
         if (!player.level().dimension().equals(net.minecraft.world.level.Level.OVERWORLD)
                 || player.level().getGameTime() % 10L != 0L) return;
         ServerLevel level = (ServerLevel) player.level();
-        PacketDistributor.sendToPlayer(player, new ReverieBedOccupancyPayload(0L, "", "", false));
-        for (BlockPos occupiedBed : ReverieBedLinksData.get(player.server).occupiedWakingBeds()) {
-            if (occupiedBed.distSqr(player.blockPosition()) > 32.0D * 32.0D
-                    || !level.hasChunkAt(occupiedBed)
-                    || !level.getBlockState(occupiedBed).is(Reverie.DREAMWEAVERS_BED.get())) continue;
-            java.util.UUID ownerId = ReverieBedOwnersData.get(player.server).owner(occupiedBed);
-            java.util.List<String> guests = new java.util.ArrayList<>();
-            String owner = "";
-            for (java.util.UUID occupant : ReverieBedLinksData.get(player.server).occupants(occupiedBed)) {
-                String name = playerName(player.server, occupant);
-                if (occupant.equals(ownerId)) owner = name; else guests.add(name);
-            }
-            PacketDistributor.sendToPlayer(player, new ReverieBedOccupancyPayload(
-                    occupiedBed.asLong(), owner, String.join("\u0000", guests), true));
-        }
         for (BlockPos bed : ReverieBedLinksData.get(player.server).occupiedWakingBeds()) {
             if (bed.distSqr(player.blockPosition()) > 32.0D * 32.0D
                     || !level.hasChunkAt(bed)
@@ -1025,10 +1009,26 @@ public final class ReverieEvents {
 
     private static void showBedAccess(ServerPlayer player, BlockPos wakingBed) {
         java.util.UUID owner = ReverieBedOwnersData.get(player.server).claimIfUnowned(wakingBed, player.getUUID());
-        int occupants = ReverieBedLinksData.get(player.server).occupantCount(wakingBed);
+        java.util.Set<java.util.UUID> occupantIds = ReverieBedLinksData.get(player.server).occupants(wakingBed);
+        int occupants = occupantIds.size();
         int maximum = ReverieConfig.MAX_DREAMERS_PER_BED.get();
-        player.displayClientMessage(Component.translatable(player.getUUID().equals(owner)
-                ? "message.reverie.bed_info_owner" : "message.reverie.bed_info_guest", occupants, maximum), false);
+        Component message = Component.literal("Owner: ").withStyle(net.minecraft.ChatFormatting.GRAY)
+                .append(Component.literal(playerName(player.server, owner)).withStyle(net.minecraft.ChatFormatting.GOLD))
+                .append(Component.literal("  •  Dreamers: " + occupants + "/" + maximum + "  •  ")
+                        .withStyle(net.minecraft.ChatFormatting.GRAY));
+        if (occupantIds.isEmpty()) {
+            message = message.copy().append(Component.literal("None").withStyle(net.minecraft.ChatFormatting.WHITE));
+        } else {
+            java.util.List<java.util.UUID> ordered = new java.util.ArrayList<>(occupantIds);
+            ordered.sort(java.util.Comparator.comparing(id -> playerName(player.server, id), String.CASE_INSENSITIVE_ORDER));
+            for (int index = 0; index < ordered.size(); index++) {
+                java.util.UUID occupant = ordered.get(index);
+                if (index > 0) message = message.copy().append(Component.literal(", ").withStyle(net.minecraft.ChatFormatting.GRAY));
+                message = message.copy().append(Component.literal(playerName(player.server, occupant)).withStyle(
+                        occupant.equals(owner) ? net.minecraft.ChatFormatting.GOLD : net.minecraft.ChatFormatting.WHITE));
+            }
+        }
+        player.displayClientMessage(message, true);
     }
 
     private static void feedback(ServerPlayer player, String category, String translation, Object... args) {

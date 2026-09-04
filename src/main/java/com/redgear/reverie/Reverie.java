@@ -55,7 +55,6 @@ public final class Reverie {
         container.registerConfig(ModConfig.Type.SERVER, ReverieConfig.SPEC);
         modBus.addListener(Reverie::addVanillaBedBlockEntitySupport);
         modBus.addListener(Reverie::addCreativeTabContents);
-        modBus.addListener(ReverieNetwork::register);
         NeoForge.EVENT_BUS.register(ReverieEvents.class);
         NeoForge.EVENT_BUS.register(ReveriePurgeManager.class);
         NeoForge.EVENT_BUS.register(ReverieDiagnostics.class);
