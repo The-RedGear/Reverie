@@ -566,7 +566,14 @@ public final class ReverieEvents {
             player.displayClientMessage(Component.translatable("message.reverie.owner_left_grace", seconds), false);
             session.markHostMissingWarned();
         }
-        if (session.hostMissingTicks() >= ReverieConfig.OWNER_ABSENCE_GRACE_SECONDS.get() * 20L) {
+        long maximumTicks = ReverieConfig.OWNER_ABSENCE_GRACE_SECONDS.get() * 20L;
+        if (maximumTicks > 0L && (session.hostMissingTicks() - 1L) % 20L == 0L) {
+            long secondsRemaining = Math.max(1L,
+                    (maximumTicks - session.hostMissingTicks() + 19L) / 20L);
+            player.displayClientMessage(Component.translatable(
+                    "message.reverie.owner_left_countdown", secondsRemaining), true);
+        }
+        if (session.hostMissingTicks() >= maximumTicks) {
             player.displayClientMessage(Component.translatable("message.reverie.owner_left_waking"), false);
             awaken(player, null);
             return true;

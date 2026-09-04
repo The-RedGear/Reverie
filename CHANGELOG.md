@@ -16,6 +16,7 @@
 - Non-owners must now pay the configured guest-entry cost when using another player's bed even while it is unoccupied; owners and creative players remain exempt.
 - A bed's owner must now enter before guests can join. If the owner leaves, guests wake after a configurable one-minute grace period unless the owner returns first.
 - Bed-host warnings now name the owner, the default guest grace period is one minute, its countdown persists through bed replacement, and occupied-bed labels correctly normalize the rendered head to the stored foot position.
+- Guests now see their remaining host-absence grace time update once per second in the action bar.
 
 ## 0.1.0 - Initial alpha
 
