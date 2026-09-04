@@ -14,6 +14,9 @@ public final class ReverieConfig {
     public static final ModConfigSpec.ConfigValue<String> OVERSTAY_EFFECT;
     public static final ModConfigSpec.IntValue OVERSTAY_EFFECT_SECONDS;
     public static final ModConfigSpec.IntValue OVERSTAY_EFFECT_AMPLIFIER;
+    public static final ModConfigSpec.BooleanValue PLAYER_CLOCK_TIME_CONTROL;
+    public static final ModConfigSpec.IntValue CLOCK_TIME_STEP;
+    public static final ModConfigSpec.IntValue CLOCK_COOLDOWN_TICKS;
     public static final ModConfigSpec.IntValue FIGMENT_CAGE_CHUNK_RADIUS;
     public static final ModConfigSpec.IntValue FIGMENT_CAGE_MAX_MOBS;
     public static final ModConfigSpec.ConfigValue<String> FIGMENT_CAGE_CHARGE_ITEM;
@@ -31,6 +34,15 @@ public final class ReverieConfig {
                 .define("sharedBedCostItem", "minecraft:amethyst_shard");
         CONSUME_SHARED_BED_COST = builder.comment("Whether the guest entry item is consumed after a successful transition.")
                 .define("consumeSharedBedCost", true);
+        builder.pop();
+
+        builder.push("reverie_time");
+        PLAYER_CLOCK_TIME_CONTROL = builder.comment("Allow dreamers to change the shared frozen Reverie time with a Clock.")
+                .define("playerClockControl", true);
+        CLOCK_TIME_STEP = builder.comment("Ticks advanced when a player uses a Clock in the Reverie.")
+                .defineInRange("clockStepTicks", 1000, 1, 24000);
+        CLOCK_COOLDOWN_TICKS = builder.comment("Cooldown after using a Clock. Twenty ticks are approximately one second.")
+                .defineInRange("clockCooldownTicks", 40, 1, 1200);
         builder.pop();
 
         builder.push("dream_inventory");

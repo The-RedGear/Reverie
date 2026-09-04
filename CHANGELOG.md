@@ -15,6 +15,7 @@
 - Added dimension-level illegal placement rejection and incremental loaded-chunk purge controls.
 - Added protection against restricted content introduced through automated building or schematic tools.
 - Added a persistent, operator-controlled Reverie clock with day, noon, night, midnight, and custom lighting settings.
+- Added player Clock controls for advancing Reverie time or returning it to noon, with a visible cooldown and server configuration.
 - Added three Reverie advancements for obtaining the bed, entering the dreamscape, and charging a Figment Cage.
 - Added rate-limited, item-specific rejection feedback.
 - Added startup configuration validation and `/reverie doctor` diagnostics.

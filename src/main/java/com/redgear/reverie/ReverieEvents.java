@@ -145,9 +145,27 @@ public final class ReverieEvents {
     public static void useRestrictedItem(PlayerInteractEvent.RightClickItem event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         if (!player.level().dimension().equals(Reverie.REVERIE_LEVEL)) return;
-        if (!isBlocked(player, event.getItemStack())) return;
+        if (isBlocked(player, event.getItemStack())) {
+            event.setCanceled(true);
+            feedback(player, "rejected", "message.reverie.rejected_named", event.getItemStack().getHoverName());
+            return;
+        }
+        if (!event.getItemStack().is(Items.CLOCK) || !ReverieConfig.PLAYER_CLOCK_TIME_CONTROL.get()) return;
         event.setCanceled(true);
-        feedback(player, "rejected", "message.reverie.rejected_named", event.getItemStack().getHoverName());
+        if (player.getCooldowns().isOnCooldown(Items.CLOCK)) return;
+        player.swing(event.getHand(), true);
+        ReverieTimeData time = ReverieTimeData.get(player.server);
+        if (player.isShiftKeyDown()) {
+            time.set(ReverieTimeData.DEFAULT_TIME);
+            ((ServerLevel) player.level()).setDayTime(ReverieTimeData.DEFAULT_TIME);
+            player.displayClientMessage(Component.translatable("message.reverie.time_reset"), true);
+        } else {
+            long next = Math.floorMod(time.time() + ReverieConfig.CLOCK_TIME_STEP.get(), 24000L);
+            time.set(next);
+            ((ServerLevel) player.level()).setDayTime(next);
+            player.displayClientMessage(Component.translatable("message.reverie.time_advanced", next), true);
+        }
+        player.getCooldowns().addCooldown(Items.CLOCK, ReverieConfig.CLOCK_COOLDOWN_TICKS.get());
     }
 
     @SubscribeEvent

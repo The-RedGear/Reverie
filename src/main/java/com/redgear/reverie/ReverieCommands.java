@@ -249,6 +249,9 @@ public final class ReverieCommands {
                 + ", warning=" + ReverieConfig.OVERSTAY_WARNING_MINUTES.get() + "m, maximum="
                 + ReverieConfig.MAX_DREAM_MINUTES.get() + "m, effect=" + ReverieConfig.OVERSTAY_EFFECT.get()
                 + " for " + ReverieConfig.OVERSTAY_EFFECT_SECONDS.get() + "s"), false);
+        source.sendSuccess(() -> Component.literal("Player clock control=" + ReverieConfig.PLAYER_CLOCK_TIME_CONTROL.get()
+                + ", step=" + ReverieConfig.CLOCK_TIME_STEP.get() + " ticks, cooldown="
+                + ReverieConfig.CLOCK_COOLDOWN_TICKS.get() + " ticks"), false);
         source.sendSuccess(() -> Component.literal("Figment Cage maximum chunk radius=" + ReverieConfig.FIGMENT_CAGE_CHUNK_RADIUS.get()
                 + " (maximum region " + (ReverieConfig.FIGMENT_CAGE_CHUNK_RADIUS.get() * 2 + 1) + "x"
                 + (ReverieConfig.FIGMENT_CAGE_CHUNK_RADIUS.get() * 2 + 1) + "), maximum mobs="
