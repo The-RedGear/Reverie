@@ -16,6 +16,7 @@ import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.util.Mth;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -72,7 +73,16 @@ public final class ReverieClient {
         public void adjustLightmapColors(ClientLevel level, float partialTick, float skyDarken,
                                          float blockLight, float skyLight, int pixelX, int pixelY,
                                          Vector3f colors) {
-            colors.set(1.0F, 1.0F, 1.0F);
+            // Preserve Reverie's original pearly, full-bright daytime canvas. Darker Clock
+            // settings deliberately reveal real block and sky lighting for build tests.
+            float darkness = Mth.clamp(skyDarken * 1.25F, 0.0F, 1.0F);
+            if (darkness <= 0.05F) {
+                colors.set(1.0F, 1.0F, 1.0F);
+                return;
+            }
+            float localLight = Math.max(blockLight, skyLight * (1.0F - darkness));
+            float brightness = Mth.clamp(0.12F + localLight * 0.88F, 0.12F, 1.0F);
+            colors.set(brightness * 0.97F, brightness * 0.98F, brightness);
         }
     }
 }
