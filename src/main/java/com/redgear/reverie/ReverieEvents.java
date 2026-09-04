@@ -17,6 +17,8 @@ import net.minecraft.world.level.block.state.properties.BedPart;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -45,6 +47,7 @@ import net.neoforged.neoforge.event.level.ExplosionEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.event.LootTableLoadEvent;
 import net.minecraft.world.level.storage.loot.LootPool;
 import net.minecraft.world.level.storage.loot.entries.LootItem;
@@ -54,6 +57,8 @@ public final class ReverieEvents {
     private static final long[] LIGHTING_PRESETS = {6000L, 12000L, 18000L, 0L};
     private static final ResourceLocation ANCIENT_CITY_LOOT = ResourceLocation.withDefaultNamespace("chests/ancient_city");
     private static final java.util.Map<java.util.UUID, Long> ENTRY_CONFIRMATIONS = new java.util.HashMap<>();
+    private static final java.util.Map<java.util.UUID, Long> BED_BREAK_CONFIRMATIONS = new java.util.HashMap<>();
+    private static final java.util.Map<java.util.UUID, Long> BED_BREAK_CONFIRMATION_EXPIRES = new java.util.HashMap<>();
     private static final java.util.Map<String, Long> FEEDBACK_COOLDOWNS = new java.util.HashMap<>();
     private static final java.util.Map<java.util.UUID, PendingDream> PENDING_DREAMS = new java.util.HashMap<>();
     private static long suppressSleepMessagesUntilTick;
@@ -640,6 +645,21 @@ public final class ReverieEvents {
                 || !level.dimension().equals(net.minecraft.world.level.Level.OVERWORLD)
                 || !event.getState().is(Reverie.DREAMWEAVERS_BED.get())) return;
         BlockPos brokenBed = bedFoot(event.getPos(), event.getState());
+        int occupants = ReverieBedLinksData.get(level.getServer()).occupantCount(brokenBed);
+        if (occupants > 0 && event.getPlayer() instanceof ServerPlayer player) {
+            long key = brokenBed.asLong();
+            Long confirmation = BED_BREAK_CONFIRMATIONS.get(player.getUUID());
+            Long expires = BED_BREAK_CONFIRMATION_EXPIRES.get(player.getUUID());
+            if (confirmation == null || confirmation != key || expires == null || level.getGameTime() > expires) {
+                BED_BREAK_CONFIRMATIONS.put(player.getUUID(), key);
+                BED_BREAK_CONFIRMATION_EXPIRES.put(player.getUUID(), level.getGameTime() + 100L);
+                event.setCanceled(true);
+                player.displayClientMessage(Component.translatable("message.reverie.confirm_occupied_break", occupants), true);
+                return;
+            }
+            BED_BREAK_CONFIRMATIONS.remove(player.getUUID());
+            BED_BREAK_CONFIRMATION_EXPIRES.remove(player.getUUID());
+        }
         ReverieBedOwnersData.get(level.getServer()).remove(brokenBed);
         ServerLevel reverie = level.getServer().getLevel(Reverie.REVERIE_LEVEL);
         if (reverie == null) return;
@@ -810,6 +830,26 @@ public final class ReverieEvents {
         if (!player.level().dimension().equals(net.minecraft.world.level.Level.OVERWORLD)
                 || player.level().getGameTime() % 10L != 0L) return;
         ServerLevel level = (ServerLevel) player.level();
+        BlockPos lookedBed = null;
+        HitResult hit = player.pick(8.0D, 0.0F, false);
+        if (hit instanceof BlockHitResult blockHit) {
+            BlockState hitState = level.getBlockState(blockHit.getBlockPos());
+            if (hitState.is(Reverie.DREAMWEAVERS_BED.get())) lookedBed = bedFoot(blockHit.getBlockPos(), hitState);
+        }
+        if (lookedBed != null && ReverieBedLinksData.get(player.server).occupantCount(lookedBed) > 0) {
+            java.util.UUID ownerId = ReverieBedOwnersData.get(player.server).owner(lookedBed);
+            java.util.List<String> guests = new java.util.ArrayList<>();
+            String owner = "";
+            for (java.util.UUID occupant : ReverieBedLinksData.get(player.server).occupants(lookedBed)) {
+                ServerPlayer dreamer = player.server.getPlayerList().getPlayer(occupant);
+                String name = dreamer == null ? occupant.toString().substring(0, 8) : dreamer.getGameProfile().getName();
+                if (occupant.equals(ownerId)) owner = name; else guests.add(name);
+            }
+            PacketDistributor.sendToPlayer(player, new ReverieBedOccupancyPayload(
+                    lookedBed.asLong(), owner, String.join("\u0000", guests), true));
+        } else {
+            PacketDistributor.sendToPlayer(player, new ReverieBedOccupancyPayload(0L, "", "", false));
+        }
         for (BlockPos bed : ReverieBedLinksData.get(player.server).occupiedWakingBeds()) {
             if (bed.distSqr(player.blockPosition()) > 32.0D * 32.0D
                     || !level.hasChunkAt(bed)

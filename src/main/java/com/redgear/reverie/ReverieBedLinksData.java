@@ -37,6 +37,11 @@ public final class ReverieBedLinksData extends SavedData {
         return link != null && link.players.contains(player);
     }
 
+    public Set<UUID> occupants(BlockPos wakingBed) {
+        Link link = links.get(wakingBed);
+        return link == null ? Set.of() : Set.copyOf(link.players);
+    }
+
     public Set<BlockPos> occupiedWakingBeds() {
         Set<BlockPos> result = new HashSet<>();
         links.forEach((pos, link) -> { if (!link.players.isEmpty()) result.add(pos); });

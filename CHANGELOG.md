@@ -11,6 +11,8 @@
 - Fully decoupled Reverie lighting time from the Overworld's shared world time and forced clear Reverie weather regardless of Overworld rain or thunder.
 - Replaced the daylight-derived sky curve with explicit dawn, noon, dusk, and midnight colors, added a bubble-pop adjustment cue, and standardized Reverie grass to the vanilla plains color.
 - Defined the Lucid Expanse biome's grass color directly as `#91BD59` so biome-level and modded rendering paths use the same tint.
+- Looking at an occupied Dreamweaver's Bed now shows its current dreamers above it, with the active owner accented and guests in white.
+- Breaking an occupied Dreamweaver's Bed now requires a second deliberate break attempt after a warning.
 
 ## 0.1.0 - Initial alpha
 

@@ -6,6 +6,9 @@ import com.mojang.math.Axis;
 import com.redgear.reverie.Reverie;
 import com.redgear.reverie.DreamweaversBedBlock;
 import com.redgear.reverie.client.ReverieItemRenderContext;
+import com.redgear.reverie.client.ReverieClient;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -60,5 +63,30 @@ public abstract class BedRendererMixin {
         // A low-alpha warm-white tint turns the normal glint into a restrained pearl sheen.
         model.render(poseStack, shimmer, 0x00F000F0, packedOverlay, 0x55FFF8E8);
         poseStack.popPose();
+
+        var occupancy = ReverieClient.hoveredBed();
+        if (!occupancy.visible() || occupancy.bedPos() != blockEntity.getBlockPos().asLong() || !foot) return;
+        poseStack.pushPose();
+        poseStack.translate(0.5D, 1.35D, 0.5D);
+        poseStack.mulPose(Minecraft.getInstance().getEntityRenderDispatcher().cameraOrientation());
+        poseStack.scale(-0.025F, -0.025F, 0.025F);
+        Font font = Minecraft.getInstance().font;
+        int line = 0;
+        if (!occupancy.owner().isEmpty()) {
+            drawName(font, occupancy.owner(), 0xFFF2D6, line++, poseStack, buffers, packedLight);
+        }
+        if (!occupancy.guests().isEmpty()) {
+            for (String guest : occupancy.guests().split("\\u0000")) {
+                if (!guest.isEmpty()) drawName(font, guest, 0xFFFFFF, line++, poseStack, buffers, packedLight);
+            }
+        }
+        poseStack.popPose();
+    }
+
+    private static void drawName(Font font, String name, int color, int line, PoseStack poses,
+                                 MultiBufferSource buffers, int packedLight) {
+        float x = -font.width(name) / 2.0F;
+        font.drawInBatch(name, x, line * 10.0F, color, false, poses.last().pose(), buffers,
+                Font.DisplayMode.NORMAL, 0x55000000, packedLight);
     }
 }

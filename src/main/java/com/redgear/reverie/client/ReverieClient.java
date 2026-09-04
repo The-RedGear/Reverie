@@ -1,6 +1,7 @@
 package com.redgear.reverie.client;
 
 import com.redgear.reverie.Reverie;
+import com.redgear.reverie.ReverieBedOccupancyPayload;
 import net.minecraft.client.renderer.BiomeColors;
 import net.minecraft.client.renderer.DimensionSpecialEffects;
 import javax.annotation.Nullable;
@@ -18,11 +19,13 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.GrassColor;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 
 @EventBusSubscriber(modid = Reverie.MOD_ID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
 public final class ReverieClient {
     private static final int PLAINS_GRASS_COLOR = 0x91BD59;
+    private static ReverieBedOccupancyPayload hoveredBed = new ReverieBedOccupancyPayload(0L, "", "", false);
     private ReverieClient() {}
 
     @SubscribeEvent
@@ -46,6 +49,14 @@ public final class ReverieClient {
             }
             return level == null || pos == null ? GrassColor.getDefaultColor() : BiomeColors.getAverageGrassColor(level, pos);
         }, Blocks.GRASS_BLOCK, Blocks.SHORT_GRASS, Blocks.TALL_GRASS, Blocks.FERN, Blocks.LARGE_FERN);
+    }
+
+    public static void handleBedOccupancy(ReverieBedOccupancyPayload payload, IPayloadContext context) {
+        hoveredBed = payload;
+    }
+
+    public static ReverieBedOccupancyPayload hoveredBed() {
+        return hoveredBed;
     }
 
     private static final class WhiteEffects extends DimensionSpecialEffects {
