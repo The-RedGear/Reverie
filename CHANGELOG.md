@@ -4,6 +4,8 @@
 
 - Made the Reverie sky and actual build lighting follow its selected time, blending from the original pearly-white noon to a cool dark-gray midnight without orange sunrise or sunset tones.
 - Corrected inherited grass tint regions to center on the linked Reverie anchor rather than the waking bed's original coordinates.
+- Shift-using a Clock now cycles through sunrise, noon, sunset, and midnight; ordinary use retains fine 1,000-tick adjustments.
+- Noon alone restores Reverie's original ambient-bright blank-canvas lighting, while every other time shows natural light and darkness.
 
 ## 0.1.0 - Initial alpha
 

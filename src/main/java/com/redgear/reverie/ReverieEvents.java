@@ -48,6 +48,7 @@ import net.minecraft.world.level.storage.loot.entries.LootItem;
 import net.minecraft.world.level.storage.loot.predicates.LootItemRandomChanceCondition;
 
 public final class ReverieEvents {
+    private static final long[] LIGHTING_PRESETS = {6000L, 12000L, 18000L, 0L};
     private static final ResourceLocation ANCIENT_CITY_LOOT = ResourceLocation.withDefaultNamespace("chests/ancient_city");
     private static final java.util.Map<java.util.UUID, Long> ENTRY_CONFIRMATIONS = new java.util.HashMap<>();
     private static final java.util.Map<String, Long> FEEDBACK_COOLDOWNS = new java.util.HashMap<>();
@@ -169,8 +170,9 @@ public final class ReverieEvents {
         player.swing(event.getHand(), true);
         ReverieTimeData time = ReverieTimeData.get(player.server);
         if (player.isShiftKeyDown()) {
-            time.set(ReverieTimeData.DEFAULT_TIME);
-            ((ServerLevel) player.level()).setDayTime(ReverieTimeData.DEFAULT_TIME);
+            long next = nextLightingPreset(time.time());
+            time.set(next);
+            ((ServerLevel) player.level()).setDayTime(next);
         } else {
             long next = Math.floorMod(time.time() + ReverieConfig.CLOCK_TIME_STEP.get(), 24000L);
             time.set(next);
@@ -180,9 +182,22 @@ public final class ReverieEvents {
         player.getCooldowns().addCooldown(Items.CLOCK, ReverieConfig.CLOCK_COOLDOWN_TICKS.get());
         for (ServerPlayer dreamer : ((ServerLevel) player.level()).players()) {
             dreamer.displayClientMessage(Component.translatable(player.isShiftKeyDown()
-                    ? "message.reverie.time_reset_by" : "message.reverie.time_advanced_by",
+                    ? "message.reverie.time_preset_by" : "message.reverie.time_advanced_by",
                     player.getDisplayName(), time.time()), true);
         }
+    }
+
+    private static long nextLightingPreset(long currentTime) {
+        long normalized = Math.floorMod(currentTime, 24000L);
+        for (int index = 0; index < LIGHTING_PRESETS.length; index++) {
+            if (LIGHTING_PRESETS[index] == normalized) {
+                return LIGHTING_PRESETS[(index + 1) % LIGHTING_PRESETS.length];
+            }
+        }
+        // Fine adjustments return to the next chronological key lighting point.
+        if (normalized < 6000L || normalized >= 18000L) return 6000L;
+        if (normalized < 12000L) return 12000L;
+        return 18000L;
     }
 
     @SubscribeEvent
