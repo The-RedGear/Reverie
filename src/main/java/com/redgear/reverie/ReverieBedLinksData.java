@@ -27,6 +27,13 @@ public final class ReverieBedLinksData extends SavedData {
         return link == null ? null : link.dreamBed;
     }
 
+    public BlockPos wakingBed(BlockPos dreamBed) {
+        for (Map.Entry<BlockPos, Link> entry : links.entrySet()) {
+            if (entry.getValue().dreamBed.equals(dreamBed)) return entry.getKey();
+        }
+        return null;
+    }
+
     public int occupantCount(BlockPos wakingBed) {
         Link link = links.get(wakingBed);
         return link == null ? 0 : link.players.size();

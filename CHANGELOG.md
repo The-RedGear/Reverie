@@ -1,19 +1,23 @@
 # Changelog
 
-## Unreleased
+## 0.1.2 - Safer Dreams
 
 - Added owner-only, one-time survival inventory recovery through a Dreamweaver's Bed when an interrupted transition leaves a recovery snapshot open. A second confirmation is required and the snapshot closes after restoration to prevent duplication.
 - Added optional Jade bed inspection showing ownership, occupancy, capacity, access policy, and Dream Anchor status.
+- Jade now resolves Reverie beds back to their linked Overworld beds so both sides display the same live occupancy and access information.
+- Simplified Jade bed details by hiding default access and temporary-bed labels; only special access rules and anchored status are shown.
 - Added optional JEI information pages for Dreamweaver's Beds and Figment Cages.
 - Vanilla Recovery Compasses carried inside the Reverie now point toward the player's linked bed without replacing their normal last-death target outside the Reverie.
+- Sneak-using a Recovery Compass inside the Reverie safely returns the player to their linked dream bed.
+- Reverie arrival beds now inherit the waking bed owner's claim. Anchoring an unclaimed bed claims it for the player creating the Dream Anchor, and ownership is retained when an anchored bed is broken.
 - Added administrator-controlled default, private, and public bed access modes, per-player invitations, and temporary host assignment while retaining the existing owner-first rules by default.
 - Added configurable notifications when guests enter or leave an owner's shared dream.
 - Added configurable void recovery modes: awaken, return to the Reverie bed, or disabled. Existing awaken behavior remains the default.
-- Added advancements for entering a shared dream, anchoring a bed, awakening safely, overstaying, and completing a safe recovery.
+- Added advancements for entering a shared dream, anchoring a bed, awakening safely, and overstaying.
 - Added reduced-particle accessibility support and moved all new player-facing text into translations.
 - Expanded `/reverie doctor` with session-state, safety-mode, optional-integration, access-override, notification, and audit status checks.
 - Added concise audit records for entering, awakening, player recovery, forced awakening, administrative recovery, bed ownership, permissions, invitations, and host changes.
-- Changed the development version to `0.2.0-beta.1` so this new feature set can be tested before a stable `0.2.0` release.
+- Released this update as version `0.1.2`.
 
 - Made the Reverie sky and actual build lighting follow its selected time, blending from the original pearly-white noon to a cool dark-gray midnight without orange sunrise or sunset tones.
 - Corrected inherited grass tint regions to center on the linked Reverie anchor rather than the waking bed's original coordinates.

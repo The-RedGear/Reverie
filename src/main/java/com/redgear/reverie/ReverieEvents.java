@@ -173,6 +173,14 @@ public final class ReverieEvents {
             feedback(player, "rejected", "message.reverie.rejected_named", event.getItemStack().getHoverName());
             return;
         }
+        if (event.getItemStack().is(Items.RECOVERY_COMPASS) && player.isShiftKeyDown()) {
+            event.setCanceled(true);
+            if (player.getCooldowns().isOnCooldown(Items.RECOVERY_COMPASS)) return;
+            player.swing(event.getHand(), true);
+            returnToDreamBed(player);
+            player.getCooldowns().addCooldown(Items.RECOVERY_COMPASS, 40);
+            return;
+        }
         if (!event.getItemStack().is(Items.CLOCK) || !ReverieConfig.PLAYER_CLOCK_TIME_CONTROL.get()) return;
         event.setCanceled(true);
         if (player.getCooldowns().isOnCooldown(Items.CLOCK)) return;
@@ -377,6 +385,9 @@ public final class ReverieEvents {
             }
         }
         if (anchored) setAnchorVisual(destination, arrivalBed, true);
+        if (currentOwner != null) {
+            ReverieBedOwnersData.get(player.server).claimIfUnowned(arrivalBed, currentOwner);
+        }
         links.join(wakingBed, arrivalBed, player.getUUID(), anchored);
         setDreamingVisual(player.server.overworld(), wakingBed, true);
         boolean useAnchorInventory = anchored && ReverieConfig.ANCHOR_DREAM_INVENTORIES.get()
@@ -807,7 +818,8 @@ public final class ReverieEvents {
     @SubscribeEvent
     public static void preserveBrokenBedOwner(net.neoforged.neoforge.event.level.BlockDropsEvent event) {
         if (!(event.getLevel() instanceof ServerLevel level)
-                || !level.dimension().equals(net.minecraft.world.level.Level.OVERWORLD)
+                || (!level.dimension().equals(net.minecraft.world.level.Level.OVERWORLD)
+                    && !level.dimension().equals(Reverie.REVERIE_LEVEL))
                 || !event.getState().is(Reverie.DREAMWEAVERS_BED.get())) return;
         BlockPos bed = bedFoot(event.getPos(), event.getState());
         java.util.UUID owner = BROKEN_BED_OWNERS.remove(bed.asLong());
@@ -826,6 +838,11 @@ public final class ReverieEvents {
                 || !level.dimension().equals(Reverie.REVERIE_LEVEL)
                 || !event.getState().is(Reverie.DREAMWEAVERS_BED.get())) return;
         BlockPos bed = bedFoot(event.getPos(), event.getState());
+        java.util.UUID owner = ReverieBedOwnersData.get(level.getServer()).owner(bed);
+        if (owner != null && event.getPlayer() != null && !event.getPlayer().isCreative()) {
+            BROKEN_BED_OWNERS.put(bed.asLong(), owner);
+        }
+        ReverieBedOwnersData.get(level.getServer()).remove(bed);
         if (ReverieAnchorsData.get(level.getServer()).remove(bed)) {
             ReverieBedLinksData.get(level.getServer()).setAnchored(bed, false);
             level.playSound(null, bed, SoundEvents.RESPAWN_ANCHOR_DEPLETE.value(),
@@ -918,6 +935,7 @@ public final class ReverieEvents {
                 : foot.relative(state.getValue(BedBlock.FACING).getOpposite());
         level.setBlock(otherHalf, Blocks.AIR.defaultBlockState(), 35);
         level.setBlock(foot, Blocks.AIR.defaultBlockState(), 35);
+        ReverieBedOwnersData.get(level.getServer()).remove(bedFoot(foot, state));
     }
 
     private static void updateAnchor(ServerPlayer player, BlockPos bed) {
@@ -933,6 +951,7 @@ public final class ReverieEvents {
                 player.displayClientMessage(Component.translatable("message.reverie.not_anchor"), true);
             }
         } else if (anchors.add(bed)) {
+            ReverieBedOwnersData.get(player.server).claimIfUnowned(bed, player.getUUID());
             ReverieBedLinksData.get(player.server).setAnchored(bed, true);
             setAnchorVisual((ServerLevel) player.level(), bed, true);
             emitGust((ServerLevel) player.level(), bed);
@@ -1162,7 +1181,6 @@ public final class ReverieEvents {
             return true;
         }
         if (restoreRecovery(player, false)) {
-            awardReverieAdvancement(player, "safe_recovery");
             player.displayClientMessage(Component.translatable("message.reverie.recovery_complete"), true);
             ReverieAuditLog.record(player, "SELF_RECOVERY", "bed=" + bed);
         }
@@ -1183,6 +1201,34 @@ public final class ReverieEvents {
             stack.set(net.minecraft.core.component.DataComponents.LODESTONE_TRACKER, tracker);
         for (ItemStack stack : player.getInventory().offhand) if (stack.is(Items.RECOVERY_COMPASS))
             stack.set(net.minecraft.core.component.DataComponents.LODESTONE_TRACKER, tracker);
+    }
+
+    private static void returnToDreamBed(ServerPlayer player) {
+        ReverieSession session = player.getData(ReverieSession.TYPE);
+        BlockPos bed = session.active() ? session.dreamBed() : null;
+        if (bed == null) {
+            player.displayClientMessage(Component.translatable("message.reverie.compass_no_bed"), true);
+            return;
+        }
+        ServerLevel level = (ServerLevel) player.level();
+        BlockState state = level.getBlockState(bed);
+        if (!state.is(Reverie.DREAMWEAVERS_BED.get())) {
+            player.displayClientMessage(Component.translatable("message.reverie.compass_no_bed"), true);
+            return;
+        }
+        java.util.Optional<net.minecraft.world.phys.Vec3> destination = BedBlock.findStandUpPosition(
+                EntityType.PLAYER, level, bed, state.getValue(BedBlock.FACING), player.getYRot());
+        if (destination.isEmpty()) {
+            player.displayClientMessage(Component.translatable("message.reverie.compass_bed_obstructed"), true);
+            return;
+        }
+        emitGust(level, player.blockPosition());
+        net.minecraft.world.phys.Vec3 safe = destination.get();
+        player.teleportTo(level, safe.x, safe.y, safe.z, player.getYRot(), player.getXRot());
+        emitGust(level, bed);
+        level.playSound(null, bed, SoundEvents.BREEZE_SLIDE, SoundSource.PLAYERS, 0.8F, 1.1F);
+        player.displayClientMessage(Component.translatable("message.reverie.compass_returned"), true);
+        ReverieAuditLog.record(player, "COMPASS_RETURN", "dreamBed=" + bed);
     }
 
     private static BlockPos placeArrivalBed(ServerLevel level, BlockPos center, Direction preferredDirection) {
