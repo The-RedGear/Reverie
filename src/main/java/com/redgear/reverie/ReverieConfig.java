@@ -27,6 +27,10 @@ public final class ReverieConfig {
     public static final ModConfigSpec.IntValue PURGE_INTERVAL_TICKS;
     public static final ModConfigSpec.IntValue PURGE_BLOCKS_PER_BATCH;
     public static final ModConfigSpec.IntValue AUTOMATIC_PURGE_MINUTES;
+    public static final ModConfigSpec.ConfigValue<String> VOID_RECOVERY_MODE;
+    public static final ModConfigSpec.BooleanValue OCCUPANCY_NOTIFICATIONS;
+    public static final ModConfigSpec.BooleanValue AUDIT_LOG_ENABLED;
+    public static final ModConfigSpec.BooleanValue REDUCED_PARTICLES;
 
     static {
         ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
@@ -88,6 +92,16 @@ public final class ReverieConfig {
                 .defineInRange("blocksPerBatch", 4096, 64, 65536);
         AUTOMATIC_PURGE_MINUTES = builder.comment("Minutes between recurring audits when automaticEnabled is true.")
                 .defineInRange("automaticIntervalMinutes", 30, 1, 10080);
+        builder.pop();
+        builder.push("safety_and_feedback");
+        VOID_RECOVERY_MODE = builder.comment("Void behavior: awaken, bed, or disabled. 'awaken' preserves the existing behavior.")
+                .define("voidRecoveryMode", "awaken");
+        OCCUPANCY_NOTIFICATIONS = builder.comment("Notify bed owners when guests enter or leave their shared dream.")
+                .define("occupancyNotifications", true);
+        AUDIT_LOG_ENABLED = builder.comment("Write important Reverie transitions and recovery actions to the server log.")
+                .define("auditLog", true);
+        REDUCED_PARTICLES = builder.comment("Reduce recurring guidance particles while retaining important transition feedback.")
+                .define("reducedParticles", false);
         builder.pop();
         SPEC = builder.build();
     }

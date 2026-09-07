@@ -29,7 +29,20 @@ public final class ReverieDiagnostics {
         ResourceLocation effectId = ResourceLocation.tryParse(effect);
         if (!effect.isBlank() && (effectId == null || !BuiltInRegistries.MOB_EFFECT.containsKey(effectId)))
             problems.add("wakeUpEffect '" + effect + "' is invalid; no wake-up effect will be applied");
+        String voidMode=ReverieConfig.VOID_RECOVERY_MODE.get().trim().toLowerCase(java.util.Locale.ROOT);
+        if (!java.util.Set.of("awaken","bed","disabled").contains(voidMode))
+            problems.add("voidRecoveryMode '"+voidMode+"' is invalid; use awaken, bed, or disabled");
+        if (ReverieConfig.MAX_DREAM_MINUTES.get()>0 && ReverieConfig.OVERSTAY_WARNING_MINUTES.get()
+                >=ReverieConfig.MAX_DREAM_MINUTES.get())
+            problems.add("warningMinutes should be lower than maximumDreamMinutes so players receive a useful warning");
         if (server.getLevel(Reverie.REVERIE_LEVEL) == null) problems.add("the Reverie dimension did not load");
+        for (var player:server.getPlayerList().getPlayers()) {
+            var session=player.getData(ReverieSession.TYPE);
+            if(session.active()&&!player.level().dimension().equals(Reverie.REVERIE_LEVEL))
+                problems.add(player.getGameProfile().getName()+" has an active Reverie session outside the Reverie");
+            if(!session.active()&&player.level().dimension().equals(Reverie.REVERIE_LEVEL))
+                problems.add(player.getGameProfile().getName()+" is in the Reverie without an active session");
+        }
         return problems;
     }
 
@@ -41,7 +54,7 @@ public final class ReverieDiagnostics {
 
     public static String compatibility() {
         return "Accessories=" + installed("accessories") + ", Curios=" + installed("curios")
-                + ", Create=" + installed("create");
+                + ", Create=" + installed("create") + ", Jade=" + installed("jade") + ", JEI=" + installed("jei");
     }
 
     private static String installed(String id) { return ModList.get().isLoaded(id) ? "detected" : "absent"; }

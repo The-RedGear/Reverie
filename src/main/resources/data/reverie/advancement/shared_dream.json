@@ -1,0 +1,10 @@
+{
+  "parent": "reverie:enter_reverie",
+  "display": {
+    "icon": { "id": "minecraft:amethyst_shard" },
+    "title": { "translate": "advancement.reverie.shared.title" },
+    "description": { "translate": "advancement.reverie.shared.description" },
+    "frame": "task", "show_toast": true, "announce_to_chat": true, "hidden": false
+  },
+  "criteria": { "shared": { "trigger": "minecraft:impossible" } }
+}

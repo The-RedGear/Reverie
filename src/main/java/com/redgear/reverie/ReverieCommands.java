@@ -2,6 +2,7 @@ package com.redgear.reverie;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
@@ -91,6 +92,22 @@ public final class ReverieCommands {
                                 .suggests((context, builder) -> SharedSuggestionProvider.suggestResource(entitySuggestions, builder))
                                 .executes(context -> editMobList(context.getSource(), ResourceLocationArgument.getId(context, "id"), false))))
                         .then(Commands.literal("list").executes(context -> listMobs(context.getSource())))));
+        dispatcher.register(Commands.literal("reverie").requires(source -> source.hasPermission(2))
+                .then(Commands.literal("bed")
+                        .then(Commands.literal("permission")
+                                .then(Commands.argument("mode", StringArgumentType.word())
+                                        .suggests((context,builder)->SharedSuggestionProvider.suggest(
+                                                new String[]{"default","private","public"},builder))
+                                        .executes(context->setBedPermission(context.getSource(),
+                                                StringArgumentType.getString(context,"mode")))))
+                        .then(Commands.literal("invite").then(Commands.argument("player", EntityArgument.player())
+                                .executes(context->invite(context.getSource(),EntityArgument.getPlayer(context,"player"),true))))
+                        .then(Commands.literal("uninvite").then(Commands.argument("player", EntityArgument.player())
+                                .executes(context->invite(context.getSource(),EntityArgument.getPlayer(context,"player"),false))))
+                        .then(Commands.literal("host")
+                                .then(Commands.literal("set").then(Commands.argument("player",EntityArgument.player())
+                                        .executes(context->setHost(context.getSource(),EntityArgument.getPlayer(context,"player")))))
+                                .then(Commands.literal("reset").executes(context->resetHost(context.getSource()))))));
     }
 
     private static com.mojang.brigadier.builder.LiteralArgumentBuilder<CommandSourceStack> editBranch(String name, boolean add) {
@@ -162,6 +179,7 @@ public final class ReverieCommands {
             return 0;
         }
         source.sendSuccess(() -> Component.literal("Awakened " + player.getGameProfile().getName() + " and restored their waking state."), true);
+        ReverieAuditLog.admin(source.getTextName(), "FORCE_AWAKEN", "player=" + player.getUUID());
         return 1;
     }
 
@@ -171,6 +189,7 @@ public final class ReverieCommands {
             return 0;
         }
         source.sendSuccess(() -> Component.literal("Restored " + player.getGameProfile().getName() + " from the " + (rollback ? "pre-recovery rollback" : "latest waking backup") + "."), true);
+        ReverieAuditLog.admin(source.getTextName(), rollback ? "RECOVERY_ROLLBACK" : "RECOVERY_RESTORE", "player=" + player.getUUID());
         return 1;
     }
 
@@ -230,6 +249,7 @@ public final class ReverieCommands {
         BlockPos foot = state.getValue(net.minecraft.world.level.block.BedBlock.PART) == net.minecraft.world.level.block.state.properties.BedPart.HEAD
                 ? pos.relative(state.getValue(net.minecraft.world.level.block.BedBlock.FACING).getOpposite()) : pos;
         ReverieBedOwnersData.get(source.getServer()).set(foot, owner.getUUID());
+        ReverieAuditLog.admin(source.getTextName(), "BED_OWNER", "bed=" + foot + " owner=" + owner.getUUID());
         source.sendSuccess(() -> Component.literal("Transferred bed ownership to " + owner.getGameProfile().getName() + "."), true);
         return 1;
     }
@@ -261,6 +281,10 @@ public final class ReverieCommands {
                 + ", batch interval=" + ReverieConfig.PURGE_INTERVAL_TICKS.get() + " ticks, blocks per batch="
                 + ReverieConfig.PURGE_BLOCKS_PER_BATCH.get() + ", recurring interval="
                 + ReverieConfig.AUTOMATIC_PURGE_MINUTES.get() + "m"), false);
+        source.sendSuccess(() -> Component.literal("Void recovery=" + ReverieConfig.VOID_RECOVERY_MODE.get()
+                + ", occupancy notifications=" + ReverieConfig.OCCUPANCY_NOTIFICATIONS.get()
+                + ", reduced particles=" + ReverieConfig.REDUCED_PARTICLES.get()
+                + ", audit log=" + ReverieConfig.AUDIT_LOG_ENABLED.get()), false);
         return 1;
     }
 
@@ -308,6 +332,11 @@ public final class ReverieCommands {
                 + "), blacklist additions=" + (blocklist.blockedBlocks().size() + blocklist.blockedItems().size())
                 + ", purge=" + (purge.active() ? "running" : "idle") + " across " + purge.loadedChunks() + " loaded chunk(s)"), false);
         source.sendSuccess(() -> Component.literal("Compatibility: " + ReverieDiagnostics.compatibility()), false);
+        source.sendSuccess(() -> Component.literal("Bed access overrides="
+                + ReverieBedAccessData.get(source.getServer()).size() + ", void recovery="
+                + ReverieConfig.VOID_RECOVERY_MODE.get() + ", occupancy notices="
+                + ReverieConfig.OCCUPANCY_NOTIFICATIONS.get() + ", audit log="
+                + ReverieConfig.AUDIT_LOG_ENABLED.get()), false);
         for (String problem : problems) source.sendFailure(Component.literal("Problem: " + problem));
         return problems.isEmpty() ? 1 : 0;
     }
@@ -350,6 +379,7 @@ public final class ReverieCommands {
             BlockPos temporary = links.removeLink(bed);
             if (temporary != null && reverie != null) ReverieEvents.removeDreamBed(reverie, temporary);
             ReverieBedOwnersData.get(source.getServer()).remove(bed);
+            ReverieBedAccessData.get(source.getServer()).remove(bed);
             cleaned++;
         }
         if (reverie != null) for (BlockPos anchor : ReverieAnchorsData.get(source.getServer()).all()) {
@@ -379,5 +409,45 @@ public final class ReverieCommands {
         long time = ReverieTimeData.get(source.getServer()).time();
         source.sendSuccess(() -> Component.literal("The Reverie clock is frozen at " + time + "."), false);
         return (int) time;
+    }
+
+    private static BlockPos lookedAtBed(CommandSourceStack source) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        ServerPlayer admin=source.getPlayerOrException(); HitResult hit=admin.pick(6.0D,0.0F,false);
+        if (!(hit instanceof BlockHitResult blockHit)) return null;
+        BlockPos pos=blockHit.getBlockPos(); net.minecraft.world.level.block.state.BlockState state=admin.level().getBlockState(pos);
+        if (!admin.level().dimension().equals(net.minecraft.world.level.Level.OVERWORLD)
+                || !state.is(Reverie.DREAMWEAVERS_BED.get())) return null;
+        return state.getValue(net.minecraft.world.level.block.BedBlock.PART)==net.minecraft.world.level.block.state.properties.BedPart.HEAD
+                ? pos.relative(state.getValue(net.minecraft.world.level.block.BedBlock.FACING).getOpposite()) : pos;
+    }
+
+    private static int setBedPermission(CommandSourceStack source,String value) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        BlockPos bed=lookedAtBed(source); if(bed==null){source.sendFailure(Component.literal("Look at a Dreamweaver's Bed in the Overworld."));return 0;}
+        ReverieBedAccessData.Policy policy; try{policy=ReverieBedAccessData.Policy.valueOf(value.toUpperCase(java.util.Locale.ROOT));}
+        catch(IllegalArgumentException error){source.sendFailure(Component.literal("Use default, private, or public."));return 0;}
+        ReverieBedAccessData.get(source.getServer()).setPolicy(bed,policy);
+        ReverieAuditLog.admin(source.getTextName(),"BED_PERMISSION","bed="+bed+" policy="+policy);
+        source.sendSuccess(()->Component.literal("Bed access set to "+policy.name().toLowerCase(java.util.Locale.ROOT)+"."),true);return 1;
+    }
+
+    private static int invite(CommandSourceStack source,ServerPlayer player,boolean add) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        BlockPos bed=lookedAtBed(source);if(bed==null){source.sendFailure(Component.literal("Look at a Dreamweaver's Bed in the Overworld."));return 0;}
+        if(add)ReverieBedAccessData.get(source.getServer()).invite(bed,player.getUUID());else ReverieBedAccessData.get(source.getServer()).uninvite(bed,player.getUUID());
+        ReverieAuditLog.admin(source.getTextName(),add?"BED_INVITE":"BED_UNINVITE","bed="+bed+" player="+player.getUUID());
+        source.sendSuccess(()->Component.literal((add?"Invited ":"Removed invite for ")+player.getGameProfile().getName()+"."),true);return 1;
+    }
+
+    private static int setHost(CommandSourceStack source,ServerPlayer player) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        BlockPos bed=lookedAtBed(source);if(bed==null){source.sendFailure(Component.literal("Look at a Dreamweaver's Bed in the Overworld."));return 0;}
+        ReverieBedAccessData.get(source.getServer()).setHost(bed,player.getUUID());
+        ReverieAuditLog.admin(source.getTextName(),"BED_HOST","bed="+bed+" player="+player.getUUID());
+        source.sendSuccess(()->Component.literal(player.getGameProfile().getName()+" is now the bed's active host."),true);return 1;
+    }
+
+    private static int resetHost(CommandSourceStack source) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        BlockPos bed=lookedAtBed(source);if(bed==null){source.sendFailure(Component.literal("Look at a Dreamweaver's Bed in the Overworld."));return 0;}
+        ReverieBedAccessData.get(source.getServer()).resetHost(bed);
+        ReverieAuditLog.admin(source.getTextName(),"BED_HOST_RESET","bed="+bed);
+        source.sendSuccess(()->Component.literal("The bed owner is its host again."),true);return 1;
     }
 }

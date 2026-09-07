@@ -25,7 +25,7 @@ The goal is simple: give survival players room to imagine freely without turning
 - NeoForge 21.1.x
 - Installed on both the server and connecting clients
 
-Reverie 0.1.0 is an alpha release. Back up important worlds before installing or updating.
+Reverie 0.2.0-beta.1 is a beta release. Back up important worlds before installing or updating.
 
 ## Documentation
 

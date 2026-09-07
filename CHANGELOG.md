@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+- Added owner-only, one-time survival inventory recovery through a Dreamweaver's Bed when an interrupted transition leaves a recovery snapshot open. A second confirmation is required and the snapshot closes after restoration to prevent duplication.
+- Added optional Jade bed inspection showing ownership, occupancy, capacity, access policy, and Dream Anchor status.
+- Added optional JEI information pages for Dreamweaver's Beds and Figment Cages.
+- Vanilla Recovery Compasses carried inside the Reverie now point toward the player's linked bed without replacing their normal last-death target outside the Reverie.
+- Added administrator-controlled default, private, and public bed access modes, per-player invitations, and temporary host assignment while retaining the existing owner-first rules by default.
+- Added configurable notifications when guests enter or leave an owner's shared dream.
+- Added configurable void recovery modes: awaken, return to the Reverie bed, or disabled. Existing awaken behavior remains the default.
+- Added advancements for entering a shared dream, anchoring a bed, awakening safely, overstaying, and completing a safe recovery.
+- Added reduced-particle accessibility support and moved all new player-facing text into translations.
+- Expanded `/reverie doctor` with session-state, safety-mode, optional-integration, access-override, notification, and audit status checks.
+- Added concise audit records for entering, awakening, player recovery, forced awakening, administrative recovery, bed ownership, permissions, invitations, and host changes.
+- Changed the development version to `0.2.0-beta.1` so this new feature set can be tested before a stable `0.2.0` release.
+
 - Made the Reverie sky and actual build lighting follow its selected time, blending from the original pearly-white noon to a cool dark-gray midnight without orange sunrise or sunset tones.
 - Corrected inherited grass tint regions to center on the linked Reverie anchor rather than the waking bed's original coordinates.
 - Using a Clock cycles through sunrise, noon, sunset, and midnight; sneaking while using it makes fine 1,000-tick adjustments.

@@ -26,6 +26,7 @@ public final class ReverieRecoveryData extends SavedData {
     public CompoundTag waking(UUID id) { Entry e = entries.get(id); return e == null ? null : e.waking.copy(); }
     public CompoundTag rollback(UUID id) { Entry e = entries.get(id); return e == null || e.rollback.isEmpty() ? null : e.rollback.copy(); }
     public Entry entry(UUID id) { return entries.get(id); }
+    public boolean active(UUID id) { Entry e=entries.get(id); return e!=null && e.active; }
     public int size() { return entries.size(); }
     public long activeCount() { return entries.values().stream().filter(Entry::active).count(); }
     public void prepareRestore(UUID id, CompoundTag current) { Entry e = entries.get(id); if (e != null) { e.rollback = current.copy(); flushDirty(); } }

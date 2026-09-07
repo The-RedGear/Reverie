@@ -1,0 +1,10 @@
+{
+  "parent": "reverie:root",
+  "display": {
+    "icon": { "id": "minecraft:chest" },
+    "title": { "translate": "advancement.reverie.recovered.title" },
+    "description": { "translate": "advancement.reverie.recovered.description" },
+    "frame": "goal", "show_toast": true, "announce_to_chat": false, "hidden": true
+  },
+  "criteria": { "recovered": { "trigger": "minecraft:impossible" } }
+}

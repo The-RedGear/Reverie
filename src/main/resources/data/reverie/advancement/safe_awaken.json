@@ -1,0 +1,10 @@
+{
+  "parent": "reverie:enter_reverie",
+  "display": {
+    "icon": { "id": "reverie:dreamweavers_bed" },
+    "title": { "translate": "advancement.reverie.awaken.title" },
+    "description": { "translate": "advancement.reverie.awaken.description" },
+    "frame": "task", "show_toast": true, "announce_to_chat": true, "hidden": false
+  },
+  "criteria": { "awakened": { "trigger": "minecraft:impossible" } }
+}

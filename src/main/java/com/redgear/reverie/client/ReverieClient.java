@@ -2,7 +2,10 @@ package com.redgear.reverie.client;
 
 import com.redgear.reverie.Reverie;
 import net.minecraft.client.renderer.BiomeColors;
+import net.minecraft.client.renderer.item.CompassItemPropertyFunction;
 import net.minecraft.client.renderer.DimensionSpecialEffects;
+import net.minecraft.client.renderer.item.ItemProperties;
+import net.minecraft.core.component.DataComponents;
 import javax.annotation.Nullable;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
@@ -18,6 +21,7 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.GrassColor;
+import net.minecraft.world.item.Items;
 
 
 @EventBusSubscriber(modid = Reverie.MOD_ID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
@@ -34,7 +38,18 @@ public final class ReverieClient {
     public static void clientSetup(FMLClientSetupEvent event) {
         // Register explicitly on the gameplay bus. The subscriber bus selector is
         // deprecated in current NeoForge and was not reliably attaching this handler.
-        event.enqueueWork(() -> NeoForge.EVENT_BUS.addListener(ReverieSkyEvents::computeFogColor));
+        event.enqueueWork(() -> {
+            NeoForge.EVENT_BUS.addListener(ReverieSkyEvents::computeFogColor);
+            ItemProperties.register(Items.RECOVERY_COMPASS, ResourceLocation.withDefaultNamespace("angle"),
+                    new CompassItemPropertyFunction((level, stack, entity) -> {
+                        if (entity.level().dimension().equals(Reverie.REVERIE_LEVEL)) {
+                            var tracker = stack.get(DataComponents.LODESTONE_TRACKER);
+                            if (tracker != null) return tracker.target().orElse(null);
+                        }
+                        return entity instanceof net.minecraft.world.entity.player.Player player
+                                ? player.getLastDeathLocation().orElse(null) : null;
+                    }));
+        });
     }
 
     @SubscribeEvent

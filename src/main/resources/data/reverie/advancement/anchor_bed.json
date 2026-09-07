@@ -1,0 +1,10 @@
+{
+  "parent": "reverie:enter_reverie",
+  "display": {
+    "icon": { "id": "minecraft:respawn_anchor" },
+    "title": { "translate": "advancement.reverie.anchor.title" },
+    "description": { "translate": "advancement.reverie.anchor.description" },
+    "frame": "goal", "show_toast": true, "announce_to_chat": true, "hidden": false
+  },
+  "criteria": { "anchored": { "trigger": "minecraft:impossible" } }
+}
