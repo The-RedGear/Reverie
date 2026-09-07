@@ -7,9 +7,7 @@
     "PlayerAdvancementsMixin",
     "ServerLevelMixin",
     "MobMixin",
-    "LevelBlockPlacementMixin",
-    "compat.CreateSchematicannonBlockMixin",
-    "compat.CreateSchematicPlacePacketMixin"
+    "LevelBlockPlacementMixin"
   ],
   "client": [
     "client.BedRendererMixin",

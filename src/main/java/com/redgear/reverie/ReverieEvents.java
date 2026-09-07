@@ -66,6 +66,9 @@ public final class ReverieEvents {
     private static long nextClockChangeTick;
     private static java.util.UUID lightingController;
     private static long lightingResetAtTick = Long.MAX_VALUE;
+    private static long automatedRejectionFeedbackTick = Long.MIN_VALUE;
+    private static final java.util.Set<Long> AUTOMATED_REJECTION_FEEDBACK_CHUNKS = new java.util.HashSet<>();
+    private static final int MAX_AUTOMATED_REJECTION_EFFECTS_PER_TICK = 8;
     private ReverieEvents() {}
 
     public static boolean shouldSuppressSleepStatus(net.minecraft.server.MinecraftServer server) {
@@ -836,8 +839,23 @@ public final class ReverieEvents {
     public static boolean rejectAutomatedPlacement(net.minecraft.world.level.Level level, BlockPos pos, BlockState state) {
         if (!(level instanceof ServerLevel serverLevel) || !level.dimension().equals(Reverie.REVERIE_LEVEL)
                 || !isBlocked(serverLevel, state)) return false;
-        rejectBlockPlacement(serverLevel, pos);
+        showAutomatedRejectionFeedback(serverLevel, pos);
         return true;
+    }
+
+    /**
+     * A large schematic can attempt thousands of prohibited placements in one tick. Keep the rejection itself
+     * immediate, but bound its cosmetic packets so a hostile or accidental paste cannot stall the server.
+     */
+    private static void showAutomatedRejectionFeedback(ServerLevel level, BlockPos pos) {
+        long tick = level.getGameTime();
+        if (automatedRejectionFeedbackTick != tick) {
+            automatedRejectionFeedbackTick = tick;
+            AUTOMATED_REJECTION_FEEDBACK_CHUNKS.clear();
+        }
+        if (AUTOMATED_REJECTION_FEEDBACK_CHUNKS.size() >= MAX_AUTOMATED_REJECTION_EFFECTS_PER_TICK) return;
+        long chunk = net.minecraft.world.level.ChunkPos.asLong(pos.getX() >> 4, pos.getZ() >> 4);
+        if (AUTOMATED_REJECTION_FEEDBACK_CHUNKS.add(chunk)) rejectBlockPlacement(level, pos);
     }
 
     private static void rejectBlockPlacement(ServerLevel level, BlockPos pos) {
