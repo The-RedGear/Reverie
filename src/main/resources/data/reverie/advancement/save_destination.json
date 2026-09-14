@@ -1,0 +1,13 @@
+{
+  "parent": "reverie:enter_reverie",
+  "display": {
+    "icon": { "id": "minecraft:recovery_compass" },
+    "title": { "translate": "advancement.reverie.destination.title" },
+    "description": { "translate": "advancement.reverie.destination.description" },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": { "saved": { "trigger": "minecraft:impossible" } }
+}

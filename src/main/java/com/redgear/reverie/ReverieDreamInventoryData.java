@@ -6,6 +6,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.saveddata.SavedData;
 
 import java.util.HashMap;
@@ -30,6 +31,7 @@ public final class ReverieDreamInventoryData extends SavedData {
         CompoundTag stored = inventories.get(key(player.getUUID(), anchor));
         player.getInventory().clearContent();
         if (stored == null) return;
+        stored = sanitized(player, stored);
         player.getInventory().load(stored.getList("Inventory", 10));
         player.getInventory().selected = Math.max(0, Math.min(8, stored.getInt("Selected")));
         ModdedInventoryBridge.restoreAll(player, stored.getCompound("ModdedInventories"));
@@ -42,11 +44,33 @@ public final class ReverieDreamInventoryData extends SavedData {
         stored.put("Inventory", inventory);
         stored.putInt("Selected", player.getInventory().selected);
         stored.put("ModdedInventories", ModdedInventoryBridge.captureAll(player));
-        inventories.put(key(player.getUUID(), anchor), stored);
+        inventories.put(key(player.getUUID(), anchor), sanitized(player, stored));
         setDirty();
     }
 
     public boolean has(UUID player, BlockPos anchor) { return inventories.containsKey(key(player, anchor)); }
+
+    /** Removes restricted stacks from the copied dream template, including supported equipment slots. */
+    static CompoundTag sanitized(ServerPlayer player, CompoundTag template) {
+        CompoundTag result = template.copy();
+        result.getList("Inventory", 10).removeIf(tag -> prohibited(player, (CompoundTag) tag));
+        CompoundTag integrations = result.getCompound("ModdedInventories");
+        for (String integration : integrations.getAllKeys()) {
+            CompoundTag slots = integrations.getCompound(integration);
+            for (String slot : slots.getAllKeys()) {
+                CompoundTag contents = slots.getCompound(slot);
+                for (String list : java.util.List.of("Items", "Cosmetics")) {
+                    contents.getList(list, 10).removeIf(tag -> prohibited(player, ((CompoundTag) tag).getCompound("Stack")));
+                }
+            }
+        }
+        return result;
+    }
+
+    private static boolean prohibited(ServerPlayer player, CompoundTag stack) {
+        ItemStack item = ItemStack.parseOptional(player.registryAccess(), stack);
+        return ReveriePurgeManager.isBlockedItem(player.serverLevel(), item);
+    }
     public int size() { return inventories.size(); }
     public boolean clear(UUID player, BlockPos anchor) {
         boolean changed = inventories.remove(key(player, anchor)) != null;

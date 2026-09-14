@@ -1,0 +1,13 @@
+{
+  "parent": "reverie:anchor_bed",
+  "display": {
+    "icon": { "id": "minecraft:name_tag" },
+    "title": { "translate": "advancement.reverie.anchor_name.title" },
+    "description": { "translate": "advancement.reverie.anchor_name.description" },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": { "named": { "trigger": "minecraft:impossible" } }
+}

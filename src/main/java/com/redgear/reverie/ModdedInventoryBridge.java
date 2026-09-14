@@ -34,7 +34,8 @@ public final class ModdedInventoryBridge {
     }
 
     private static void returnToInventory(ServerPlayer player, ItemStack stack) {
-        if (!stack.isEmpty()) player.getInventory().add(stack);
+        if (!stack.isEmpty() && !player.level().dimension().equals(Reverie.REVERIE_LEVEL))
+            player.getInventory().add(stack);
     }
 
     private static void ejectBlockedCurios(ServerPlayer player, Predicate<ItemStack> blocked) {

@@ -1,6 +1,8 @@
 package com.redgear.reverie.client;
 
 import com.redgear.reverie.Reverie;
+import com.redgear.reverie.ReverieNetwork;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BiomeColors;
 import net.minecraft.client.renderer.item.CompassItemPropertyFunction;
 import net.minecraft.client.renderer.DimensionSpecialEffects;
@@ -39,7 +41,12 @@ public final class ReverieClient {
         // Register explicitly on the gameplay bus. The subscriber bus selector is
         // deprecated in current NeoForge and was not reliably attaching this handler.
         event.enqueueWork(() -> {
+            ReverieNetwork.CLIENT_DESTINATIONS = payload -> Minecraft.getInstance().setScreen(
+                    new ReverieDestinationScreen(payload.destinations()));
+            ReverieNetwork.CLIENT_LIGHTING = ReverieLightingState::set;
             NeoForge.EVENT_BUS.addListener(ReverieSkyEvents::computeFogColor);
+            NeoForge.EVENT_BUS.addListener(ReverieLightingState::clientTick);
+            NeoForge.EVENT_BUS.addListener(ReverieClient::dreamTooltips);
             ItemProperties.register(Items.RECOVERY_COMPASS, ResourceLocation.withDefaultNamespace("angle"),
                     new CompassItemPropertyFunction((level, stack, entity) -> {
                         if (entity.level().dimension().equals(Reverie.REVERIE_LEVEL)) {
@@ -50,6 +57,18 @@ public final class ReverieClient {
                                 ? player.getLastDeathLocation().orElse(null) : null;
                     }));
         });
+    }
+
+    private static void dreamTooltips(net.neoforged.neoforge.event.entity.player.ItemTooltipEvent event) {
+        var player = event.getEntity();
+        if (player == null || !player.level().dimension().equals(Reverie.REVERIE_LEVEL)) return;
+        var stack = event.getItemStack();
+        String key = stack.is(Items.CLOCK) ? "tooltip.reverie.clock"
+                : stack.is(Items.RECOVERY_COMPASS) ? "tooltip.reverie.compass"
+                : stack.is(Items.NAME_TAG) ? "tooltip.reverie.bookmarks"
+                : stack.is(Items.BOOK) ? "tooltip.reverie.imprint" : null;
+        if (key != null) event.getToolTip().add(net.minecraft.network.chat.Component.translatable(key)
+                .withStyle(net.minecraft.ChatFormatting.GRAY));
     }
 
     @SubscribeEvent
@@ -92,7 +111,7 @@ public final class ReverieClient {
                                          Vector3f colors) {
             // Exact noon is Reverie's deliberately ambient-lit blank canvas. At every
             // other time leave Minecraft's lightmap untouched for accurate previews.
-            if (Math.floorMod(level.getDayTime(), 24000L) == 6000L) {
+            if (ReverieLightingState.time(level) == 6000L) {
                 colors.set(1.0F, 1.0F, 1.0F);
             }
         }

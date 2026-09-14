@@ -35,9 +35,22 @@ public final class ReverieDiagnostics {
         if (ReverieConfig.MAX_DREAM_MINUTES.get()>0 && ReverieConfig.OVERSTAY_WARNING_MINUTES.get()
                 >=ReverieConfig.MAX_DREAM_MINUTES.get())
             problems.add("warningMinutes should be lower than maximumDreamMinutes so players receive a useful warning");
+        if (ReverieConfig.MAX_DREAM_MINUTES.get()>0 && ReverieConfig.OVERSTAY_WARNING_MINUTES.get()>0
+                && ReverieConfig.OVERSTAY_WARNING_MINUTES.get()+ReverieConfig.OVERSTAY_GRACE_MINUTES.get()
+                > ReverieConfig.MAX_DREAM_MINUTES.get())
+            problems.add("warningMinutes plus warningGraceMinutes exceeds maximumDreamMinutes; forced waking may happen before the grace period ends");
         if (server.getLevel(Reverie.REVERIE_LEVEL) == null) problems.add("the Reverie dimension did not load");
         for (var player:server.getPlayerList().getPlayers()) {
             var session=player.getData(ReverieSession.TYPE);
+            if (session.active()) {
+                String name = player.getGameProfile().getName();
+                if (session.wakingBed() == null || session.dreamBed() == null)
+                    problems.add(name + " has an incomplete bed link in their active session");
+                if (!session.wakingPlayer().contains("Inventory", 9))
+                    problems.add(name + " has no valid waking inventory in their session");
+                if (!ReverieRecoveryData.get(server).active(player.getUUID()))
+                    problems.add(name + " has no active recovery snapshot");
+            }
             if(session.active()&&!player.level().dimension().equals(Reverie.REVERIE_LEVEL))
                 problems.add(player.getGameProfile().getName()+" has an active Reverie session outside the Reverie");
             if(!session.active()&&player.level().dimension().equals(Reverie.REVERIE_LEVEL))

@@ -20,11 +20,15 @@ public final class ReverieMobAllowlistData extends SavedData {
     public boolean add(ResourceLocation id) { boolean changed = denied.remove(id); if (changed) setDirty(); return changed; }
     public boolean remove(ResourceLocation id) { boolean changed = denied.add(id); if (changed) setDirty(); return changed; }
     public Set<ResourceLocation> all() { return Set.copyOf(denied); }
-    private static ReverieMobAllowlistData load(CompoundTag tag, HolderLookup.Provider registries) {
+    static ReverieMobAllowlistData load(CompoundTag tag, HolderLookup.Provider registries) {
         ReverieMobAllowlistData data = new ReverieMobAllowlistData();
-        if (tag.contains("Denied")) for (String key : tag.getCompound("Denied").getAllKeys()) { ResourceLocation id = ResourceLocation.tryParse(key); if (id != null) data.denied.add(id); }
-        data.denied.remove(ResourceLocation.withDefaultNamespace("warden"));
-        data.denied.remove(ResourceLocation.withDefaultNamespace("phantom"));
+        if (tag.contains("Denied", 10)) {
+            data.denied.clear();
+            for (String key : tag.getCompound("Denied").getAllKeys()) {
+                ResourceLocation id = ResourceLocation.tryParse(key);
+                if (id != null) data.denied.add(id);
+            }
+        }
         return data;
     }
     @Override public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {

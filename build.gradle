@@ -186,6 +186,21 @@ tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
 }
 
+// Focused saved-data regressions; no game client or production world is required.
+sourceSets {
+    regression {
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+        runtimeClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath
+    }
+}
+tasks.register('regressionTest', JavaExec) {
+    dependsOn tasks.named('regressionClasses')
+    classpath = sourceSets.regression.runtimeClasspath
+    mainClass = 'com.redgear.reverie.SavedDataRegression'
+    workingDir = layout.buildDirectory.get().asFile
+}
+tasks.named('check') { dependsOn tasks.named('regressionTest') }
+
 // IDEA no longer automatically downloads sources/javadoc jars for dependencies, so we need to explicitly enable the behavior.
 idea {
     module {

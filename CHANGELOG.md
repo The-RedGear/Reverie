@@ -1,5 +1,54 @@
 # Changelog
 
+## 0.1.3 - Dreams Worth Returning To
+
+- Overlapping Dream Anchor regions now use the anchor nearest to the entered Dreamweaver's Bed for both arrival and saved Dream Inventory.
+- Holding a Dreamweaver's Bed in an anchor region now identifies the Dream Anchor that will be used.
+
+### Audit fixes
+
+- Enforced restricted items across saved Dream Inventories and Dream Imprints, including Curios, Accessories, and cosmetic slots. Waking recovery snapshots are never altered by this cleanup.
+- Migrated bed ownership records to dimension-aware keys so identical coordinates in the Overworld and Reverie cannot overwrite one another.
+- Added a configurable grace period between the overstay warning and its wake-up effect.
+- Added confirmation before replacing or erasing a Dream Imprint.
+- Restricted Dream Anchor naming to the bed owner or an administrator.
+- Made Figment Cage range guidance render at the player's height and limited one-hit mob cleanup to player attacks.
+- Changed forced loaded-chunk purges to use bounded incremental work instead of blocking the server tick.
+- Added clearer `block`/`allow` and `allow`/`deny` command aliases while preserving the existing commands.
+- Prevented the Reverie inventory purge from running after a timed wake restores Survival inventory.
+- Preserved restored waking status effects and corrected arrival height for vertically moved beds.
+- Restricted Dream Imprints to non-anchored destinations.
+- Made bookmark selection persist independently for each dream, stabilized cycling, and fixed bookmarks named Bed.
+- Added bookmark count/name limits, missing-bookmark feedback, and destination safety checks.
+- Bound anchor overlap confirmation to the intended bed.
+- Stopped automatic bed checks from loading remote Overworld chunks.
+- Cleared transient lighting, confirmation, and purge state when players disconnect or servers stop.
+- Preserved administrator mob restrictions across restarts.
+- Matched Jade cage population to the enforced limit and added contextual tool instructions.
+- Expanded active-session diagnostics and added 58 saved-data regression checks to the build.
+
+See `docs/RELEASE_AUDIT_0.1.3.md` for unresolved release blockers and the limits of this verification.
+
+### Features
+
+- Expanded the Reverie advancement path to teach lighting previews, Dream Imprints, saved beds, Compass travel, and anchor naming through their real in-game interactions.
+- Added a Recovery Compass destination menu. Saved beds belong to the player and remain available after waking, replacing, or losing the Compass. Using the Compass on a bed toggles it, and destroying that bed removes it.
+- Added personal Dream Bookmarks. Use a renamed Name Tag on a location in the Reverie to save it, then choose it from the Recovery Compass.
+- Added personal Dream Imprints for temporary beds. Use a Book on a non-anchored Reverie bed to save the current inventory as the starting kit for future temporary dreams; the Book itself is excluded.
+- New dream inventories now begin with a Recovery Compass. Existing Dream Imprints and saved anchor inventories continue loading exactly as saved.
+- Anchored beds can now be named with renamed Name Tags. Anchor names appear in Jade and in overlap warnings.
+- Overworld beds now show the name of the Dream Anchor serving their region even while nobody is inside the Reverie.
+- Added an automatic warning when a dreamer's Overworld bed is missing or no longer has a safe place to wake.
+- Guest countdowns now identify the bed host as well as the remaining time.
+- Added Jade details for Figment Cages, including charge, chunk range, and current mob capacity.
+- Adding a Dream Anchor in an overlapping region now warns the player and requires a second use to confirm.
+- Clock feedback now uses clear lighting preset names instead of relying on tick values.
+- Right-clicking a Clock cycles personal lighting presets. Sneak-right-clicking returns the player to the server's shared lighting; offhand use has no special behavior, and ordinary players cannot alter lighting for other dreamers.
+- Added persistent recovery history and `/reverie recovery history <player>` for administrators.
+- Added configurable automatic safety checks that repair a missing active inventory snapshot and warn about unsafe waking beds.
+- Updated `/reverie doctor` and configuration output to report automatic safety-check status.
+- Released this update as version `0.1.3`.
+
 ## 0.1.2 - Safer Dreams
 
 - Added owner-only, one-time survival inventory recovery through a Dreamweaver's Bed when an interrupted transition leaves a recovery snapshot open. A second confirmation is required and the snapshot closes after restoration to prevent duplication.
@@ -8,7 +57,7 @@
 - Simplified Jade bed details by hiding default access and temporary-bed labels; only special access rules and anchored status are shown.
 - Added optional JEI information pages for Dreamweaver's Beds and Figment Cages.
 - Vanilla Recovery Compasses carried inside the Reverie now point toward the player's linked bed without replacing their normal last-death target outside the Reverie.
-- Sneak-using a Recovery Compass inside the Reverie safely returns the player to their linked dream bed.
+- Sneak-using a Recovery Compass inside the Reverie safely returns the player to their linked Dreamweaver's Bed.
 - Reverie arrival beds now inherit the waking bed owner's claim. Anchoring an unclaimed bed claims it for the player creating the Dream Anchor, and ownership is retained when an anchored bed is broken.
 - Added administrator-controlled default, private, and public bed access modes, per-player invitations, and temporary host assignment while retaining the existing owner-first rules by default.
 - Added configurable notifications when guests enter or leave an owner's shared dream.

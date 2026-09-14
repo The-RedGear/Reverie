@@ -7,9 +7,11 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
@@ -37,6 +39,8 @@ public final class Reverie {
             Registries.ITEM, ResourceLocation.fromNamespaceAndPath(MOD_ID, "unusable_in_reverie"));
     public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(MOD_ID);
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(MOD_ID);
+    public static final DeferredRegister<CreativeModeTab> CREATIVE_TABS = DeferredRegister.create(
+            Registries.CREATIVE_MODE_TAB, MOD_ID);
     public static final DeferredBlock<DreamweaversBedBlock> DREAMWEAVERS_BED = BLOCKS.register("dreamweavers_bed",
             () -> new DreamweaversBedBlock(DyeColor.WHITE,
                     BlockBehaviour.Properties.of().strength(0.8F).sound(SoundType.WOOD).noOcclusion()));
@@ -47,14 +51,32 @@ public final class Reverie {
                     .lightLevel(state -> state.getValue(FigmentCageBlock.CHARGES) * 2)));
     public static final DeferredItem<FigmentCageItem> FIGMENT_CAGE_ITEM = ITEMS.register("figment_cage",
             () -> new FigmentCageItem(FIGMENT_CAGE.get(), new Item.Properties()));
+    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> REVERIE_TAB = CREATIVE_TABS.register(
+            "reverie", () -> CreativeModeTab.builder()
+                    .title(Component.translatable("itemGroup.reverie"))
+                    .icon(() -> DREAMWEAVERS_BED_ITEM.get().getDefaultInstance())
+                    .displayItems((parameters, output) -> {
+                        output.accept(DREAMWEAVERS_BED_ITEM.get());
+                        output.accept(FIGMENT_CAGE_ITEM.get());
+                        output.accept(Items.RESPAWN_ANCHOR);
+                        output.accept(Items.RECOVERY_COMPASS);
+                        output.accept(Items.CLOCK);
+                        output.accept(Items.BOOK);
+                        output.accept(Items.NAME_TAG);
+                        output.accept(Items.AMETHYST_SHARD);
+                        output.accept(Items.ECHO_SHARD);
+                        output.accept(Items.PHANTOM_MEMBRANE);
+                    }).build());
 
     public Reverie(IEventBus modBus, ModContainer container) {
         BLOCKS.register(modBus);
         ITEMS.register(modBus);
+        CREATIVE_TABS.register(modBus);
         ReverieSession.ATTACHMENTS.register(modBus);
         container.registerConfig(ModConfig.Type.SERVER, ReverieConfig.SPEC);
         modBus.addListener(Reverie::addVanillaBedBlockEntitySupport);
         modBus.addListener(Reverie::addCreativeTabContents);
+        modBus.addListener(ReverieNetwork::register);
         NeoForge.EVENT_BUS.register(ReverieEvents.class);
         NeoForge.EVENT_BUS.register(ReveriePurgeManager.class);
         NeoForge.EVENT_BUS.register(ReverieDiagnostics.class);

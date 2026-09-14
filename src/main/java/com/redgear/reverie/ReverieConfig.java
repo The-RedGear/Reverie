@@ -11,6 +11,7 @@ public final class ReverieConfig {
     public static final ModConfigSpec.IntValue OWNER_ABSENCE_GRACE_SECONDS;
     public static final ModConfigSpec.BooleanValue ANCHOR_DREAM_INVENTORIES;
     public static final ModConfigSpec.IntValue OVERSTAY_WARNING_MINUTES;
+    public static final ModConfigSpec.IntValue OVERSTAY_GRACE_MINUTES;
     public static final ModConfigSpec.IntValue MAX_DREAM_MINUTES;
     public static final ModConfigSpec.ConfigValue<String> OVERSTAY_EFFECT;
     public static final ModConfigSpec.IntValue OVERSTAY_EFFECT_SECONDS;
@@ -31,6 +32,7 @@ public final class ReverieConfig {
     public static final ModConfigSpec.BooleanValue OCCUPANCY_NOTIFICATIONS;
     public static final ModConfigSpec.BooleanValue AUDIT_LOG_ENABLED;
     public static final ModConfigSpec.BooleanValue REDUCED_PARTICLES;
+    public static final ModConfigSpec.BooleanValue AUTOMATIC_SAFETY_CHECKS;
 
     static {
         ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
@@ -46,13 +48,13 @@ public final class ReverieConfig {
         builder.pop();
 
         builder.push("reverie_time");
-        PLAYER_CLOCK_TIME_CONTROL = builder.comment("Allow dreamers to change the shared frozen Reverie time with a Clock.")
+        PLAYER_CLOCK_TIME_CONTROL = builder.comment("Allow dreamers to preview Reverie lighting privately with a Clock.")
                 .define("playerClockControl", true);
-        CLOCK_TIME_STEP = builder.comment("Ticks advanced when a player uses a Clock in the Reverie.")
+        CLOCK_TIME_STEP = builder.comment("Legacy precision step retained for configuration compatibility; player Clock use now cycles named presets.")
                 .defineInRange("clockStepTicks", 1000, 1, 24000);
         CLOCK_COOLDOWN_TICKS = builder.comment("Cooldown after using a Clock. Twenty ticks are approximately one second.")
                 .defineInRange("clockCooldownTicks", 40, 1, 1200);
-        GLOBAL_CLOCK_COOLDOWN_TICKS = builder.comment("Shared cooldown before any dreamer can change time again.")
+        GLOBAL_CLOCK_COOLDOWN_TICKS = builder.comment("Legacy shared-clock cooldown retained for configuration compatibility; player Clock use is now personal.")
                 .defineInRange("globalClockCooldownTicks", 40, 1, 1200);
         CLOCK_RESET_MINUTES = builder.comment("Minutes before player-selected lighting returns to noon. Zero disables the timer; the setting player leaving always resets it.")
                 .defineInRange("returnToNoonMinutes", 5, 0, 1440);
@@ -64,8 +66,10 @@ public final class ReverieConfig {
         builder.pop();
 
         builder.push("overstaying");
-        OVERSTAY_WARNING_MINUTES = builder.comment("Minutes before a dreamer is warned and becomes eligible for the wake-up effect. Zero disables.")
+        OVERSTAY_WARNING_MINUTES = builder.comment("Minutes before a dreamer is warned that they have stayed too long. Zero disables.")
                 .defineInRange("warningMinutes", 45, 0, 10080);
+        OVERSTAY_GRACE_MINUTES = builder.comment("Minutes after the warning before the wake-up effect applies.")
+                .defineInRange("warningGraceMinutes", 5, 0, 10080);
         MAX_DREAM_MINUTES = builder.comment("Minutes before the player is automatically awakened. Zero disables forced waking.")
                 .defineInRange("maximumDreamMinutes", 60, 0, 10080);
         OVERSTAY_EFFECT = builder.comment("Effect applied after ignoring the warning, such as minecraft:slowness. Empty disables.")
@@ -102,6 +106,8 @@ public final class ReverieConfig {
                 .define("auditLog", true);
         REDUCED_PARTICLES = builder.comment("Reduce recurring guidance particles while retaining important transition feedback.")
                 .define("reducedParticles", false);
+        AUTOMATIC_SAFETY_CHECKS = builder.comment("Periodically verify active recovery snapshots and warn dreamers if their waking bed becomes unsafe.")
+                .define("automaticSafetyChecks", true);
         builder.pop();
         SPEC = builder.build();
     }

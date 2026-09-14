@@ -23,4 +23,7 @@ Inventory-loss reports should also state whether `/reverie recovery status <play
 4. Preserve the waking-inventory escrow and recovery guarantees.
 5. Test dimension transitions on both an integrated and dedicated server.
 
+`./gradlew regressionTest` runs the saved-data regressions; the normal build also runs them.
+Use [the release test matrix](docs/RELEASE_TEST_MATRIX_0.1.3.md) for player transitions and optional integrations. A passing compilation or saved-data test is not a substitute for those checks.
+
 By submitting a contribution, you agree that the project owner may distribute it under Reverie's project license.

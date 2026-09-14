@@ -47,5 +47,7 @@ public final class DreamweaversBedItem extends BlockItem {
         tooltip.add(Component.translatable("tooltip.reverie.anchor.2").withStyle(ChatFormatting.GRAY));
         tooltip.add(Component.translatable("tooltip.reverie.anchor.3").withStyle(ChatFormatting.GRAY));
         tooltip.add(Component.translatable("tooltip.reverie.anchor.4").withStyle(ChatFormatting.GRAY));
+        tooltip.add(Component.translatable("tooltip.reverie.anchor_name").withStyle(ChatFormatting.GRAY));
+        tooltip.add(Component.translatable("tooltip.reverie.imprint").withStyle(ChatFormatting.GRAY));
     }
 }

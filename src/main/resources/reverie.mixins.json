@@ -11,7 +11,8 @@
   ],
   "client": [
     "client.BedRendererMixin",
-    "client.BlockEntityWithoutLevelRendererMixin"
+    "client.BlockEntityWithoutLevelRendererMixin",
+    "client.ClientPacketListenerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

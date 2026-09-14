@@ -20,7 +20,7 @@ public final class ReverieSkyEvents {
         ClientLevel level = Minecraft.getInstance().level;
         if (level == null || !level.dimension().equals(Reverie.REVERIE_LEVEL)) return;
 
-        long ticks = Math.floorMod(level.getDayTime(), 24000L);
+        long ticks = ReverieLightingState.time(level);
         float[] from;
         float[] to;
         float progress;

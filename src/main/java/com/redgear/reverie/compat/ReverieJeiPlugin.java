@@ -13,7 +13,8 @@ public final class ReverieJeiPlugin implements IModPlugin {
     @Override public void registerRecipes(IRecipeRegistration registration){
         registration.addIngredientInfo(Reverie.DREAMWEAVERS_BED_ITEM.get(),
                 Component.translatable("jei.reverie.bed.1"),Component.translatable("jei.reverie.bed.2"),
-                Component.translatable("jei.reverie.bed.3"),Component.translatable("jei.reverie.bed.4"));
+                Component.translatable("jei.reverie.bed.3"),Component.translatable("jei.reverie.bed.4"),
+                Component.translatable("tooltip.reverie.imprint"),Component.translatable("tooltip.reverie.anchor_name"));
         registration.addIngredientInfo(Reverie.FIGMENT_CAGE_ITEM.get(),
                 Component.translatable("jei.reverie.cage.1"),Component.translatable("jei.reverie.cage.2"));
     }

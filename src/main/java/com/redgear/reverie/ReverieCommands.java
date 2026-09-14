@@ -33,6 +33,8 @@ public final class ReverieCommands {
                 .then(Commands.literal("blocklist")
                         .then(editBranch("add", true))
                         .then(editBranch("remove", false))
+                        .then(editBranch("block", true))
+                        .then(editBranch("allow", false))
                         .then(Commands.literal("list").executes(context -> list(context.getSource()))))
                 .then(Commands.literal("awaken")
                         .then(Commands.argument("player", EntityArgument.player())
@@ -43,7 +45,9 @@ public final class ReverieCommands {
                         .then(Commands.literal("rollback").then(Commands.argument("player", EntityArgument.player())
                                 .executes(context -> recover(context.getSource(), EntityArgument.getPlayer(context, "player"), true))))
                         .then(Commands.literal("status").then(Commands.argument("player", EntityArgument.player())
-                                .executes(context -> recoveryStatus(context.getSource(), EntityArgument.getPlayer(context, "player")))))));
+                                .executes(context -> recoveryStatus(context.getSource(), EntityArgument.getPlayer(context, "player")))))
+                        .then(Commands.literal("history").then(Commands.argument("player", EntityArgument.player())
+                                .executes(context -> recoveryHistory(context.getSource(), EntityArgument.getPlayer(context, "player")))))));
         dispatcher.register(Commands.literal("reverie").requires(source -> source.hasPermission(2))
                 .then(Commands.literal("sessions").then(Commands.literal("list")
                         .executes(context -> listSessions(context.getSource()))))
@@ -89,6 +93,12 @@ public final class ReverieCommands {
                                 .suggests((context, builder) -> SharedSuggestionProvider.suggestResource(entitySuggestions, builder))
                                 .executes(context -> editMobList(context.getSource(), ResourceLocationArgument.getId(context, "id"), true))))
                         .then(Commands.literal("remove").then(Commands.argument("id", ResourceLocationArgument.id())
+                                .suggests((context, builder) -> SharedSuggestionProvider.suggestResource(entitySuggestions, builder))
+                                .executes(context -> editMobList(context.getSource(), ResourceLocationArgument.getId(context, "id"), false))))
+                        .then(Commands.literal("allow").then(Commands.argument("id", ResourceLocationArgument.id())
+                                .suggests((context, builder) -> SharedSuggestionProvider.suggestResource(entitySuggestions, builder))
+                                .executes(context -> editMobList(context.getSource(), ResourceLocationArgument.getId(context, "id"), true))))
+                        .then(Commands.literal("deny").then(Commands.argument("id", ResourceLocationArgument.id())
                                 .suggests((context, builder) -> SharedSuggestionProvider.suggestResource(entitySuggestions, builder))
                                 .executes(context -> editMobList(context.getSource(), ResourceLocationArgument.getId(context, "id"), false))))
                         .then(Commands.literal("list").executes(context -> listMobs(context.getSource())))));
@@ -201,6 +211,7 @@ public final class ReverieCommands {
                 + ", captured at game time " + entry.gameTime()), false);
         return 1;
     }
+    private static int recoveryHistory(CommandSourceStack source,ServerPlayer player){var entries=ReverieRecoveryHistoryData.get(source.getServer()).entries(player.getUUID());if(entries.isEmpty()){source.sendSuccess(()->Component.literal("No recovery history for "+player.getGameProfile().getName()+"."),false);return 0;}source.sendSuccess(()->Component.literal("Recovery history for "+player.getGameProfile().getName()+":"),false);entries.stream().limit(10).forEach(e->source.sendSuccess(()->Component.literal("• "+e.action()+" — "+e.detail()+" (game time "+e.time()+")"),false));return entries.size();}
 
     private static int listSessions(CommandSourceStack source) {
         int count = 0;
@@ -210,7 +221,7 @@ public final class ReverieCommands {
             count++;
             long seconds = session.dreamElapsedTicks() / 20L;
             source.sendSuccess(() -> Component.literal(player.getGameProfile().getName() + ": " + seconds
-                    + "s, waking bed " + session.wakingBed() + ", dream bed " + session.dreamBed()
+                    + "s, waking bed " + session.wakingBed() + ", Dreamweaver's Bed " + session.dreamBed()
                     + ", persistent inventory=" + session.anchorInventory()), false);
         }
         if (count == 0) source.sendSuccess(() -> Component.literal("No players are currently in the Reverie."), false);
@@ -266,13 +277,13 @@ public final class ReverieCommands {
                 + ", guest cost=" + ReverieConfig.SHARED_BED_COST_ITEM.get()
                 + ", consume cost=" + ReverieConfig.CONSUME_SHARED_BED_COST.get()), false);
         source.sendSuccess(() -> Component.literal("Anchor inventories=" + ReverieConfig.ANCHOR_DREAM_INVENTORIES.get()
-                + ", warning=" + ReverieConfig.OVERSTAY_WARNING_MINUTES.get() + "m, maximum="
+                + ", warning=" + ReverieConfig.OVERSTAY_WARNING_MINUTES.get() + "m, grace="
+                + ReverieConfig.OVERSTAY_GRACE_MINUTES.get() + "m, maximum="
                 + ReverieConfig.MAX_DREAM_MINUTES.get() + "m, effect=" + ReverieConfig.OVERSTAY_EFFECT.get()
                 + " for " + ReverieConfig.OVERSTAY_EFFECT_SECONDS.get() + "s"), false);
         source.sendSuccess(() -> Component.literal("Player clock control=" + ReverieConfig.PLAYER_CLOCK_TIME_CONTROL.get()
-                + ", step=" + ReverieConfig.CLOCK_TIME_STEP.get() + " ticks, cooldown="
-                + ReverieConfig.CLOCK_COOLDOWN_TICKS.get() + " ticks, shared cooldown="
-                + ReverieConfig.GLOBAL_CLOCK_COOLDOWN_TICKS.get() + " ticks"), false);
+                + ", cooldown=" + ReverieConfig.CLOCK_COOLDOWN_TICKS.get() + " ticks, reset="
+                + ReverieConfig.CLOCK_RESET_MINUTES.get() + "m"), false);
         source.sendSuccess(() -> Component.literal("Figment Cage maximum chunk radius=" + ReverieConfig.FIGMENT_CAGE_CHUNK_RADIUS.get()
                 + " (maximum region " + (ReverieConfig.FIGMENT_CAGE_CHUNK_RADIUS.get() * 2 + 1) + "x"
                 + (ReverieConfig.FIGMENT_CAGE_CHUNK_RADIUS.get() * 2 + 1) + "), maximum mobs="
@@ -284,7 +295,8 @@ public final class ReverieCommands {
         source.sendSuccess(() -> Component.literal("Void recovery=" + ReverieConfig.VOID_RECOVERY_MODE.get()
                 + ", occupancy notifications=" + ReverieConfig.OCCUPANCY_NOTIFICATIONS.get()
                 + ", reduced particles=" + ReverieConfig.REDUCED_PARTICLES.get()
-                + ", audit log=" + ReverieConfig.AUDIT_LOG_ENABLED.get()), false);
+                + ", audit log=" + ReverieConfig.AUDIT_LOG_ENABLED.get()
+                + ", automatic safety checks=" + ReverieConfig.AUTOMATIC_SAFETY_CHECKS.get()), false);
         return 1;
     }
 
@@ -299,7 +311,7 @@ public final class ReverieCommands {
         ServerLevel level = source.getServer().getLevel(Reverie.REVERIE_LEVEL);
         if (level == null) { source.sendFailure(Component.literal("The Reverie is not currently loaded.")); return 0; }
         ReveriePurgeManager.force(level);
-        source.sendSuccess(() -> Component.literal("Forced purge completed across all currently loaded Reverie chunks."), true);
+        source.sendSuccess(() -> Component.literal("A priority purge has started across all currently loaded Reverie chunks."), true);
         return purgeStatus(source);
     }
 
@@ -336,7 +348,8 @@ public final class ReverieCommands {
                 + ReverieBedAccessData.get(source.getServer()).size() + ", void recovery="
                 + ReverieConfig.VOID_RECOVERY_MODE.get() + ", occupancy notices="
                 + ReverieConfig.OCCUPANCY_NOTIFICATIONS.get() + ", audit log="
-                + ReverieConfig.AUDIT_LOG_ENABLED.get()), false);
+                + ReverieConfig.AUDIT_LOG_ENABLED.get() + ", automatic safety checks="
+                + ReverieConfig.AUTOMATIC_SAFETY_CHECKS.get()), false);
         for (String problem : problems) source.sendFailure(Component.literal("Problem: " + problem));
         return problems.isEmpty() ? 1 : 0;
     }

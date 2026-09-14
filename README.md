@@ -2,7 +2,7 @@
 
 Reverie adds a creative dreamscape to survival Minecraft.
 
-Sleep in a Dreamweaver's Bed and wake up in a bright, open reflection of the same place in your world. Build, fly, experiment, and plan without using commands or changing your survival save. When you wake up, you return to where you fell asleep with your original inventory restored.
+Sleep in a Dreamweaver's Bed and wake up in a bright, open reflection of the same place in your world. Build, fly, experiment, and plan without using commands or spending survival resources. When you wake up, you return to where you fell asleep with your original inventory restored.
 
 Dream Anchors turn parts of the Reverie into lasting project spaces with their own creative inventories. Figment Cages let you bring mobs into controlled areas when a build needs more than an empty canvas.
 
@@ -25,7 +25,7 @@ The goal is simple: give survival players room to imagine freely without turning
 - NeoForge 21.1.x
 - Installed on both the server and connecting clients
 
-Reverie 0.2.0-beta.1 is a beta release. Back up important worlds before installing or updating.
+Reverie 0.1.3 is an early release. Back up important worlds before installing or updating.
 
 ## Documentation
 

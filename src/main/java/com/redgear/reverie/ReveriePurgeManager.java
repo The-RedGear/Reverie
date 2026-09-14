@@ -34,6 +34,11 @@ public final class ReveriePurgeManager {
     private ReveriePurgeManager() {}
 
     @SubscribeEvent
+    public static void serverStopped(net.neoforged.neoforge.event.server.ServerStoppedEvent event) {
+        stop(); LOADED.clear(); inspected = removed = nextBatchTick = nextAutomaticTick = 0;
+    }
+
+    @SubscribeEvent
     public static void chunkLoaded(ChunkEvent.Load event) {
         if (event.getLevel() instanceof ServerLevel level && level.dimension().equals(Reverie.REVERIE_LEVEL))
             LOADED.add(event.getChunk().getPos().toLong());
@@ -85,8 +90,9 @@ public final class ReveriePurgeManager {
     }
 
     public static void force(ServerLevel level) {
+        // A forced audit begins immediately, but remains bounded per server tick so a
+        // large loaded area cannot stall or watchdog-crash the server.
         start(level);
-        while (active) process(level, 1_000_000);
     }
 
     public static Status status() { return new Status(active, LOADED.size(), PENDING.size() + (current == Long.MIN_VALUE ? 0 : 1), inspected, removed); }
